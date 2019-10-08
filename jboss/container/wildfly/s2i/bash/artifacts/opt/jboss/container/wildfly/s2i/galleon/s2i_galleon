@@ -188,6 +188,7 @@ function galleon_provision_server() {
         if [ -z "$GALLEON_PROVISION_SERVER" ]; then
           if [ -d $GALLEON_LOCAL_PROVISIONING ]; then
             if [ -f "$GALLEON_LOCAL_PROVISIONING/provisioning.xml" ]; then
+              install_custom_fp
               echo "Provisioning server with Galleon description in $GALLEON_LOCAL_PROVISIONING"
               cp "$GALLEON_LOCAL_PROVISIONING/provisioning.xml" "$JBOSS_CONTAINER_WILDFLY_S2I_GALLEON_PROVISION"
               GALLEON_DESCRIPTION_LOCATION="$JBOSS_CONTAINER_WILDFLY_S2I_GALLEON_PROVISION"
@@ -241,6 +242,14 @@ function galleon_provision_server() {
       fi
     fi
     galleon_reset_mvn_env
+}
+
+function install_custom_fp {
+  if [ -d $GALLEON_LOCAL_PROVISIONING/local-repository ]; then
+    pushd "$GALLEON_LOCAL_PROVISIONING/local-repository" &> /dev/null
+    cp -r * $GALLEON_LOCAL_MAVEN_REPO
+    popd &> /dev/null
+  fi
 }
 
 function galleon_replace_server() {
