@@ -4,6 +4,14 @@ version: '1.0'
 description: Scripts to adjust the configuration via xml markers or CLI
 
 
+envs:
+    - name: "EXECUTE_BOOT_SCRIPT_INVOKER"
+      example: "true"
+      description: "If true, and no user extensions installed, server startup CLI script is executed from the server builtin script invoker. If user extensions are installed, CLI script will be executed for user extensions."
+    - name: "EXECUTE_BOOT_SCRIPT_INVOKER_TIMEOUT"
+      example: "30"
+      description: "Timeout in seconds to wait for the server to be done executing builtin scripts. Default is 30 seconds"
+        
 execute:
 - script: configure.sh
   user: '185'

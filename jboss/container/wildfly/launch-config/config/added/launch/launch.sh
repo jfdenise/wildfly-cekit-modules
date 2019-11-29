@@ -39,18 +39,58 @@ function configure_server() {
 
   # Process any errors and warnings generated while running the launch configuration scripts
   processErrorsAndWarnings
+  if [ $? -ne 0 ]; then
+    exit 1
+  fi
 
-  # The scripts will add the operations in a special file, invoke the embedded server if it is necessary
-  # and run the CLI scripts
-  exec_cli_scripts "${CLI_SCRIPT_FILE}"
+  if [ "${EXECUTE_BOOT_SCRIPT_INVOKER}" = "true" ]; then
+    configure_boot_script "${CLI_SCRIPT_FILE}"
+  else
+    # The scripts will add the operations in a special file, invoke the embedded server if it is necessary
+    # and run the CLI scripts
+    exec_cli_scripts "${CLI_SCRIPT_FILE}"
 
+    configure_extensions
+    if [ $? -ne 0 ]; then
+      exit 1
+    fi
+    # re-run CLI scipts just in case a delayed postinstall updated it
+    exec_cli_scripts "${CLI_SCRIPT_FILE}"
+  fi
+}
+
+function configure_extensions() {
   # run the delayed postinstall of modules
   createConfigExecutionContext
   executeModules delayedPostConfigure
 
   # Process any errors and warnings generated while running the launch configuration scripts
   processErrorsAndWarnings
+}
 
-  # re-run CLI scipts just in case a delayed postinstall updated it
-  exec_cli_scripts "${CLI_SCRIPT_FILE}"
+function handleExtensions {
+  if [ -n "${HAS_EXTENSIONS}" ]; then
+    local marker_file=${CLI_RELOAD_MARKER_DIR}/wf-cli-invoker-result
+    wait_marker "${marker_file}"
+    if [ $? -ne 0 ]; then
+      log_error "Error, server never advertised configuration done. Can't proceed with extensions."
+      exit 1
+    else
+      read -r status<"${marker_file}"
+      rm -rf ${CLI_RELOAD_MARKER_DIR}
+      if [ "success" = "${status}" ]; then
+        configure_extensions
+        if [ $? = 0 ]; then
+          reload_server
+          return $?
+        else
+          shutdown_server
+        fi
+      else
+        log_error "Error, server failed to configure. Can't proceed with extensions"
+        exit 1
+      fi
+    fi
+  fi
+  return 0;
 }
