@@ -13,6 +13,5 @@
         <package name="org.keycloak.keycloak-jboss-adapter-core"/>
         <package name="org.keycloak.keycloak-wildfly-adapter"/>
         <package name="org.keycloak.keycloak-saml-wildfly-adapter"/>
-        <package name="org.keycloak.keycloak-servlet-oauth-client"/>
     </packages>
 </feature-group-spec>
