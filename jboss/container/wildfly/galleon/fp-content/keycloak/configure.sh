@@ -4,6 +4,7 @@ set -e
 
 SCRIPT_DIR=$(dirname $0)
 ADDED_DIR=${SCRIPT_DIR}/added
+cp -r ${ADDED_DIR}/* ${GALLEON_FP_PATH}
 
 # Generate the set of keycloak packages.
 pushd "$JBOSS_HOME/modules/system/add-ons/keycloak/" &> /dev/null
@@ -18,6 +19,4 @@ done < "$target_dir"
 rm "$target_dir"
 popd
 
-sed -i "s|<!-- ##KEYCLOAK_PACKAGES## -->|$pkgs|" "${ADDED_DIR}/src/main/resources/feature_groups/keycloak.xml"
-
-cp -r ${ADDED_DIR}/* ${GALLEON_FP_PATH}
+sed -i "s|<!-- ##KEYCLOAK_PACKAGES## -->|$pkgs|" "${GALLEON_FP_PATH}/src/main/resources/feature_groups/keycloak.xml"
