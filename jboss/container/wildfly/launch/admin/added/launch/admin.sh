@@ -47,11 +47,14 @@ function configure_administration() {
 EOF
     fi
   else
-    # required by probe, server must start unsecured if no admin user set.
+    # required by probe and jboss-cli, server must start unsecured if no admin user set.
     if [ "${mode}" = "cli" ]; then
       cat << EOF >> "${CLI_SCRIPT_FILE}"
         if (outcome == success && result != undefined) of /core-service=management/management-interface=http-interface:read-attribute(name=http-authentication-factory)
           /core-service=management/management-interface=http-interface:write-attribute(name=http-authentication-factory)
+        end-if
+        if (outcome == success && result != undefined) of /core-service=management/management-interface=http-interface:read-attribute(name=http-upgrade.sasl-authentication-factory)
+          /core-service=management/management-interface=http-interface:write-attribute(name=http-upgrade.sasl-authentication-factory)
         end-if
 EOF
     fi
