@@ -245,11 +245,19 @@ function galleon_provision_server() {
 }
 
 function install_custom_fp {
-  if [ -d $GALLEON_LOCAL_PROVISIONING/local-repository ]; then
-    pushd "$GALLEON_LOCAL_PROVISIONING/local-repository" &> /dev/null
-    cp -r * $GALLEON_LOCAL_MAVEN_REPO
-    popd &> /dev/null
+  if [ -n "$GALLEON_CUSTOM_LOCAL_REPO" ]; then
+    copy_custom_fp "$GALLEON_CUSTOM_LOCAL_REPO"
+  else
+    if [ -d $GALLEON_LOCAL_PROVISIONING/local-repository ]; then
+      copy_custom_fp "$GALLEON_LOCAL_PROVISIONING/local-repository"
+    fi
   fi
+}
+
+function copy_custom_fp {
+  pushd "$1" &> /dev/null
+  cp -r * $GALLEON_LOCAL_MAVEN_REPO
+  popd &> /dev/null
 }
 
 function galleon_replace_server() {
