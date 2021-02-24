@@ -171,7 +171,11 @@ function galleon_reset_mvn_env() {
 function galleon_provision_server() {
     galleon_init_mvn_env
     # Embedded galleon description
-    GALLEON_LOCAL_PROVISIONING=$S2I_SOURCE_DIR/galleon
+    if [ -n "$GALLEON_DIR" ]; then
+      GALLEON_LOCAL_PROVISIONING="$S2I_SOURCE_DIR/$GALLEON_DIR"
+    else
+      GALLEON_LOCAL_PROVISIONING=$S2I_SOURCE_DIR/galleon
+    fi
     GALLEON_ROOT_DIR=${GALLEON_DEFINITIONS}
 
     nb=0

@@ -43,6 +43,8 @@ envs:
   description: "Used during s2i to provision a custom galleon server. Name of a galleon built-in configuration."
 - name: GALLEON_PROVISION_LAYERS
   description: "Used during s2i to provision a custom galleon server. Comma separated list of layers to compose the configuration."
+- name: GALLEON_DIR
+  description: "Used during s2i to locate the directory relative to the application project directory that contains a provisioning.xml file. By default the directory 'galleon' is used."
 - name: GALLEON_DEFAULT_FAT_SERVER
   description: "Mandatory. Absolute path to directory that contains galleon fat default server provisioning.xml file"
 - name: GALLEON_PROVISION_DEFAULT_FAT_SERVER
