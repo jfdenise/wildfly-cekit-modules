@@ -171,7 +171,11 @@ function galleon_reset_mvn_env() {
 function galleon_provision_server() {
     galleon_init_mvn_env
     # Embedded galleon description
-    GALLEON_LOCAL_PROVISIONING=$S2I_SOURCE_DIR/galleon
+    if [ -n "$GALLEON_DIR" ]; then
+      GALLEON_LOCAL_PROVISIONING="$S2I_SOURCE_DIR/$GALLEON_DIR"
+    else
+      GALLEON_LOCAL_PROVISIONING=$S2I_SOURCE_DIR/galleon
+    fi
     GALLEON_ROOT_DIR=${GALLEON_DEFINITIONS}
 
     nb=0
@@ -191,8 +195,8 @@ function galleon_provision_server() {
     if [ -n "$GALLEON_PROVISION_LAYERS" ]; then
       galleon_patch_generic_config
       GALLEON_DESCRIPTION_LOCATION="$GALLEON_GENERIC_LAYERS_DEFINITION"
-      if [ -d $GALLEON_LOCAL_PROVISIONING ]; then
-        echo "Galleon provisioning of layers overrides Galleon description in $GALLEON_LOCAL_PROVISIONING"
+      if [ -f $GALLEON_LOCAL_PROVISIONING/provisioning.xml ]; then
+        echo "Galleon provisioning of layers overrides Galleon provisioning.xml located in $GALLEON_LOCAL_PROVISIONING"
       fi
     fi
     
@@ -213,8 +217,8 @@ function galleon_provision_server() {
             echo "Error, $GALLEON_PROVISION_SERVER doesn't exist, can't provision a server, exiting."
             exit 1
           fi
-          if [ -d $GALLEON_LOCAL_PROVISIONING ]; then
-            echo "$GALLEON_SERVER Galleon description overrides Galleon description in $GALLEON_LOCAL_PROVISIONING"
+          if [ -f $GALLEON_LOCAL_PROVISIONING/provisioning.xml ]; then
+            echo "$GALLEON_PROVISION_SERVER Galleon description overrides Galleon provisioning.xml in $GALLEON_LOCAL_PROVISIONING"
           fi
           cp $GALLEON_ROOT_DIR/$GALLEON_PROVISION_SERVER/provisioning.xml "$JBOSS_CONTAINER_WILDFLY_S2I_GALLEON_PROVISION"
           GALLEON_DESCRIPTION_LOCATION="$JBOSS_CONTAINER_WILDFLY_S2I_GALLEON_PROVISION"
