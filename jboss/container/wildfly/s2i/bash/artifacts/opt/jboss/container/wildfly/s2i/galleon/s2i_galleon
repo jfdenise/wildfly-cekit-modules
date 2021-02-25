@@ -102,11 +102,25 @@ function galleon_init_mvn_env() {
     if [ -n "$MAVEN_SETTINGS_XML" ]; then
       ORIGINAL_MAVEN_SETTINGS_XML=$MAVEN_SETTINGS_XML
     fi
+
+    # Need to compute the project src root dir.
+    dest_dir="${S2I_DESTINATION_DIR:-/tmp}"
+    GALLEON_PROJECT_SRC_DIR="${dest_dir}/src"
+    
+    # Identify custom galleon content directory
+    if [ -n "$GALLEON_DIR" ]; then
+      GALLEON_LOCAL_PROVISIONING="${GALLEON_PROJECT_SRC_DIR}/${GALLEON_DIR}"
+    else
+      GALLEON_LOCAL_PROVISIONING="${GALLEON_PROJECT_SRC_DIR}/galleon"
+    fi
     # Set galleon settings prior to init maven.
     # Doing so default settings.xml are untouched.
-    MAVEN_SETTINGS_XML=$GALLEON_MAVEN_SETTINGS_XML
-    # Required for S2I_SOURCE_DIR to be initialized
-    maven_s2i_init
+    if [ -f "${GALLEON_LOCAL_PROVISIONING}/settings.xml" ]; then
+      MAVEN_SETTINGS_XML="${GALLEON_LOCAL_PROVISIONING}/settings.xml"
+      echo "Using ${MAVEN_SETTINGS_XML} when provisioning server."
+    else
+      MAVEN_SETTINGS_XML="${GALLEON_MAVEN_SETTINGS_XML}"
+    fi
     # reset part of the s2i maven initialization to adapt to galleon local repo
     MAVEN_LOCAL_REPO=$GALLEON_LOCAL_MAVEN_REPO
     unset MAVEN_ARGS
@@ -169,13 +183,7 @@ function galleon_reset_mvn_env() {
 }
 
 function galleon_provision_server() {
-    galleon_init_mvn_env
-    # Embedded galleon description
-    if [ -n "$GALLEON_DIR" ]; then
-      GALLEON_LOCAL_PROVISIONING="$S2I_SOURCE_DIR/$GALLEON_DIR"
-    else
-      GALLEON_LOCAL_PROVISIONING=$S2I_SOURCE_DIR/galleon
-    fi
+    galleon_init_mvn_env    
     GALLEON_ROOT_DIR=${GALLEON_DEFINITIONS}
 
     nb=0
