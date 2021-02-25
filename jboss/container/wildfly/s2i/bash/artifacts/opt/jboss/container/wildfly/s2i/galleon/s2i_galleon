@@ -15,6 +15,40 @@ function galleon_patch_generic_config() {
        sed -i "s|<!-- ##GALLEON_LAYERS## -->|${layers}|" $GALLEON_GENERIC_LAYERS_DEFINITION/config.xml
      fi
    fi
+   if [ -n "$GALLEON_PROVISION_FP" ]; then
+     for fp in $(echo $GALLEON_PROVISION_FP | sed "s/,/ /g"); do
+       items=$(echo $fp | sed "s/:/ /g")
+       size=0
+       featurepack="<feature-pack><inherit-packages>false</inherit-packages><inherit-configs>false</inherit-configs>"
+       for item in ${items}; do
+         case $size in
+
+           0)
+           featurepack="$featurepack<groupId>$item</groupId>"
+           ;;
+
+           1)
+           featurepack="$featurepack<artifactId>$item</artifactId>"
+           ;;
+
+           2)
+           featurepack="$featurepack<version>$item</version>"
+           ;;
+
+         esac
+         size=$((size + 1))
+       done
+       featurepack="$featurepack</feature-pack>"
+       featurepacks="$featurepacks$featurepack"
+       if [ $size -ne 3 ]; then
+         echo Invalid Galleon feature-pack $fp 
+         exit 1
+       fi
+     done
+     if [ -n "$featurepacks" ]; then
+       sed -i "s|<!-- ##GALLEON_FEATURE_PACKS## -->|${featurepacks}|" $GALLEON_GENERIC_LAYERS_DEFINITION/pom.xml
+     fi
+   fi
 }
 
 function galleon_dump_repo_file_list() {
@@ -95,6 +129,7 @@ function galleon_init_mvn_env() {
     fi
     if [ -n "$MAVEN_ARGS_APPEND" ]; then
       ORIGINAL_MAVEN_ARGS_APPEND=${MAVEN_ARGS_APPEND}
+      unset MAVEN_ARGS_APPEND
     fi
     if [ -n "$MAVEN_LOCAL_REPO" ]; then
       ORIGINAL_MAVEN_LOCAL_REPO=$MAVEN_LOCAL_REPO
@@ -121,14 +156,20 @@ function galleon_init_mvn_env() {
     else
       MAVEN_SETTINGS_XML="${GALLEON_MAVEN_SETTINGS_XML}"
     fi
+    if test -r "${JBOSS_CONTAINER_MAVEN_DEFAULT_MODULE}"/scl-enable-maven; then
+      source "${JBOSS_CONTAINER_MAVEN_DEFAULT_MODULE}"/scl-enable-maven
+    fi
+    source "${JBOSS_CONTAINER_MAVEN_DEFAULT_MODULE}"/maven.sh
+    # Initialize Maven
+    maven_init
     # reset part of the s2i maven initialization to adapt to galleon local repo
     MAVEN_LOCAL_REPO=$GALLEON_LOCAL_MAVEN_REPO
+    # Unset args set by maven initialization
     unset MAVEN_ARGS
-    unset MAVEN_ARGS_APPEND
+    #capture default Maven ARGS
     maven_init_var_MAVEN_ARGS    
     # Add settings that Galleon plugin will use when generating config
     MAVEN_ARGS="$MAVEN_ARGS -Djboss.modules.settings.xml.url=file://$GALLEON_MAVEN_SETTINGS_XML"
-    
 }
 
 function galleon_is_slim_server {
