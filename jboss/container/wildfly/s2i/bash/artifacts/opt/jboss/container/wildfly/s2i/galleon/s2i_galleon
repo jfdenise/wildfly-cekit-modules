@@ -182,8 +182,26 @@ function galleon_reset_mvn_env() {
     fi
 }
 
+
+function install_custom_fps {
+  if [ -n "$GALLEON_CUSTOM_FP_MAVEN_REPO" ]; then
+    copy_custom_fps "$GALLEON_CUSTOM_LOCAL_REPO"
+  else
+    if [ -d $GALLEON_LOCAL_PROVISIONING/repository ]; then
+      copy_custom_fps "$GALLEON_LOCAL_PROVISIONING/repository"
+    fi
+  fi
+}
+
+function copy_custom_fps {
+  pushd "$1" &> /dev/null
+  cp -r * $GALLEON_LOCAL_MAVEN_REPO
+  popd &> /dev/null
+}
+
 function galleon_provision_server() {
-    galleon_init_mvn_env    
+    galleon_init_mvn_env
+    install_custom_fps
     GALLEON_ROOT_DIR=${GALLEON_DEFINITIONS}
 
     nb=0
