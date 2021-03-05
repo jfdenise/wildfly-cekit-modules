@@ -15,8 +15,8 @@ function galleon_patch_generic_config() {
        sed -i "s|<!-- ##GALLEON_LAYERS## -->|${layers}|" $GALLEON_GENERIC_LAYERS_DEFINITION/config.xml
      fi
    fi
-   if [ -n "$GALLEON_PROVISION_FP" ]; then
-     for fp in $(echo $GALLEON_PROVISION_FP | sed "s/,/ /g"); do
+   if [ -n "$GALLEON_PROVISION_FEATURE_PACKS" ]; then
+     for fp in $(echo $GALLEON_PROVISION_FEATURE_PACKS | sed "s/,/ /g"); do
        items=$(echo $fp | sed "s/:/ /g")
        size=0
        featurepack="<feature-pack><inherit-packages>false</inherit-packages><inherit-configs>false</inherit-configs>"
@@ -225,8 +225,8 @@ function galleon_reset_mvn_env() {
 
 
 function install_custom_fps {
-  if [ -n "$GALLEON_CUSTOM_FP_MAVEN_REPO" ]; then
-    copy_custom_fps "$GALLEON_CUSTOM_LOCAL_REPO"
+  if [ -n "$GALLEON_CUSTOM_FEATURE_PACKS_MAVEN_REPO" ]; then
+    copy_custom_fps "$GALLEON_CUSTOM_FEATURE_PACKS_MAVEN_REPO"
   else
     if [ -d $GALLEON_LOCAL_PROVISIONING/repository ]; then
       copy_custom_fps "$GALLEON_LOCAL_PROVISIONING/repository"
