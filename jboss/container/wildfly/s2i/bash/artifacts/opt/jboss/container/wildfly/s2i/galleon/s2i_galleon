@@ -16,6 +16,7 @@ function galleon_patch_generic_config() {
      fi
    fi
    if [ -n "$GALLEON_PROVISION_FEATURE_PACKS" ]; then
+     echo Provisioning custom Galleon feature-packs: $GALLEON_PROVISION_FEATURE_PACKS
      for fp in $(echo $GALLEON_PROVISION_FEATURE_PACKS | sed "s/,/ /g"); do
        items=$(echo $fp | sed "s/:/ /g")
        size=0
@@ -41,7 +42,7 @@ function galleon_patch_generic_config() {
        featurepack="$featurepack</feature-pack>"
        featurepacks="$featurepacks$featurepack"
        if [ $size -ne 3 ]; then
-         echo Invalid Galleon feature-pack $fp 
+         log_error Invalid Galleon feature-pack $fp 
          exit 1
        fi
      done
@@ -145,6 +146,10 @@ function galleon_init_mvn_env() {
     # Identify custom galleon content directory
     if [ -n "$GALLEON_DIR" ]; then
       GALLEON_LOCAL_PROVISIONING="${GALLEON_PROJECT_SRC_DIR}/${GALLEON_DIR}"
+      if [ ! -d "$GALLEON_LOCAL_PROVISIONING" ]; then
+        log_error $GALLEON_DIR directory referenced by GALLEON_DIR env variable doesn't exist in the project. Exiting.
+        exit 1
+      fi
     else
       GALLEON_LOCAL_PROVISIONING="${GALLEON_PROJECT_SRC_DIR}/galleon"
     fi
@@ -226,9 +231,14 @@ function galleon_reset_mvn_env() {
 
 function install_custom_fps {
   if [ -n "$GALLEON_CUSTOM_FEATURE_PACKS_MAVEN_REPO" ]; then
-    copy_custom_fps "$GALLEON_CUSTOM_FEATURE_PACKS_MAVEN_REPO"
+    if [ -d "$GALLEON_CUSTOM_FEATURE_PACKS_MAVEN_REPO" ]; then
+      copy_custom_fps "$GALLEON_CUSTOM_FEATURE_PACKS_MAVEN_REPO"
+    else
+      log_error $GALLEON_CUSTOM_FEATURE_PACKS_MAVEN_REPO directory referenced by GALLEON_CUSTOM_FEATURE_PACKS_MAVEN_REPO env variable doesn't exist. Exiting.
+      exit 1
+    fi
   else
-    if [ -d $GALLEON_LOCAL_PROVISIONING/repository ]; then
+    if [ -d "$GALLEON_LOCAL_PROVISIONING/repository" ]; then
       copy_custom_fps "$GALLEON_LOCAL_PROVISIONING/repository"
     fi
   fi
