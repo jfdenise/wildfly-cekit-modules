@@ -1,5 +1,5 @@
 #!/bin/sh
-
+#HELLO JUST FOR FUN
 # Access Log Valve configuration script
 # Usage:
 #   it is disabled by default, to disable it set the following variable to true:
