@@ -1,1 +1,3 @@
-# wildfly-cekit-modules
+# wildfly-cekit-module
+
+POC 1
