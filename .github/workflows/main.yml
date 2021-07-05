@@ -1,38 +1,122 @@
-name: Wildfly Cekit OpenShift Modules - Bats DISABLED< Will be replaced by WildFly s2i build/test in next commit.
+name: Wildfly Cekit OpenShift Modules - Build/Run WildFly s2i image on the changes introduced in the PR. 
 on:
-  push:
-    branches: [ master ]
   pull_request:
-     branches: [ master ]
+     branches: [ wildfly-s2i-v2 ]
 env:
   LANG: en_US.UTF-8
-  STANDALONE_CONFIG_URL: https://raw.githubusercontent.com/jboss-container-images/jboss-eap-modules/7.3.x-legacy/jboss-eap-config-openshift/CD17.0/added/standalone-openshift.xml
-#jobs:
-#  bats:
-#    name: Bats Shell Tests
-#    runs-on: ${{ matrix.os }}
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os: [ubuntu-latest]
-#    steps:
-#      - uses: actions/checkout@v2
-#      - uses: n1hility/cancel-previous-runs@v2
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Setup required system packages
-#        run: |
-#          sudo apt-get update
-#          sudo apt-get install bats libxml2-utils ncat
-#          echo 2 | sudo update-alternatives --config nc
-#      - name: setup env
-#        run: |
-#          PWD=$(pwd)
-#          ./test-common/default-env.sh
-#          wget ${{ env.STANDALONE_CONFIG_URL }} -O ${PWD}/test-common/configuration/standalone-openshift.xml
-#      - name: Test
-#        run: |
-#          set -x
-#          PWD=$(pwd)
-#          ${PWD}/run-all-tests.sh --tap
-
+  S2I_URI: https://api.github.com/repos/openshift/source-to-image/releases/latest
+  CEKIT_VERSION: 3.2.1
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+jobs:
+  wfci:
+    name: Wildfly-s2i Build and Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: wildfly-cekit-modules
+      - uses: actions/checkout@v2
+        with:
+            repository: jfdenise/wildfly-s2i
+            ref: v2-shared-modules-test
+            path: wildfly-s2i
+      - uses: n1hility/cancel-previous-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify latest ubi8-minimal and openjdk-11-runtime images are present
+        run: |
+          docker pull registry.access.redhat.com/ubi8/openjdk-11-runtime
+          docker pull registry.access.redhat.com/ubi8/ubi-minimal
+          docker image ls | grep ubi8
+      - name: Setup required system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install krb5-multidev
+      - name: Setup Python 3.x
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Setup virtualenv and install cekit and required packages
+        run: |
+          python --version
+          sudo pip install virtualenv
+          mkdir ~/cekit${{ env.CEKIT_VERSION }}
+          python3 -m venv ~/cekit${{ env.CEKIT_VERSION }}
+          . ~/cekit${{ env.CEKIT_VERSION }}/bin/activate
+          pip install cekit==${{ env.CEKIT_VERSION }} docker docker-squash odcs behave lxml 
+      - name: install s2i binary
+        run: |
+          echo ===== Installing s2i from ${{ env.S2I_URL }} =====
+          mkdir /tmp/s2i/ && cd /tmp/s2i/
+          curl -s ${{ env.S2I_URI }} \
+           | grep browser_download_url \
+           | grep linux-amd64 \
+           | cut -d '"' -f 4 \
+           | wget -qi -
+           tar xvf source-to-image*.gz
+           sudo mv s2i /usr/bin
+           which s2i
+           s2i version
+      - name: Build 
+        run: |
+          . ~/cekit${{ env.CEKIT_VERSION }}/bin/activate
+          pushd wildfly-builder-image
+          cekit build --overrides=wf-cekit-overrides.yaml docker
+          popd
+          pushd wildfly-runtime-image
+          cekit build --overrides=wf-cekit-overrides.yaml docker
+          popd
+          docker image ls
+        working-directory: wildfly-s2i
+      - name: Behave Tests
+        run: |
+          . ~/cekit${{ env.CEKIT_VERSION }}/bin/activate
+          pushd wildfly-builder-image
+          cekit -v test behave --steps-url http://github.com/jfdenise/behave-test-steps.git
+          popd
+        working-directory: wildfly-s2i
+      - name: Additional Tests
+        run: |
+          export IMAGE_VERSION=dev
+          export NAMESPACE=wildfly
+          export IMAGE_NAME=${NAMESPACE}/wildfly-s2i-jdk11
+          export RUNTIME_IMAGE_NAME=${NAMESPACE}/wildfly-runtime-jre11
+          . ~/cekit${{ env.CEKIT_VERSION }}/bin/activate
+          ./test/run
+        working-directory: wildfly-s2i
+      - name: Push to quay.io
+        run: |
+            BUILDER_IMAGE_VERSION=$(./tools/release/get-image-version.sh wildfly/wildfly-s2i-jdk11)
+            if [ -z ${BUILDER_IMAGE_VERSION} ]; then
+               echo "ERROR no builder image version found"
+               exit 1
+            fi
+            RUNTIME_IMAGE_VERSION=$(./tools/release/get-image-version.sh wildfly/wildfly-runtime-jre11)
+            if [ -z ${RUNTIME_IMAGE_VERSION} ]; then
+               echo "ERROR no builder image version found"
+               exit 1
+            fi
+            if [ ${BUILDER_IMAGE_VERSION} != ${RUNTIME_IMAGE_VERSION} ]; then
+               echo "ERROR builder and runtime images version are not equal: builder ${BUILDER_IMAGE_VERSION}, runtime ${RUNTIME_IMAGE_VERSION}"
+               exit 1
+            fi
+            WILDFLY_IMAGE_VERSION=${BUILDER_IMAGE_VERSION}
+            BUILDER_IMAGE="quay.io/${{ secrets.QUAY_REPO }}/wildfly-s2i-jdk11:wfcekit-${PR_NUMBER}"
+            RUNTIME_IMAGE="quay.io/${{ secrets.QUAY_REPO }}/wildfly-runtime-jre11:wfcekit-${PR_NUMBER}"
+            echo Pushing to quay.io
+            echo BUILDER_IMAGE: ${BUILDER_IMAGE}
+            echo RUNTIME_IMAGE: ${RUNTIME_IMAGE}
+            docker login -u="${{ secrets.QUAY_USERNAME }}" -p="${{ secrets.QUAY_PASSWORD }}" quay.io
+            docker tag wildfly/wildfly-s2i-jdk11:${WILDFLY_IMAGE_VERSION} ${BUILDER_IMAGE}
+            docker push ${BUILDER_IMAGE}
+            docker tag wildfly/wildfly-runtime-jre11:${WILDFLY_IMAGE_VERSION} ${RUNTIME_IMAGE}
+            docker push ${RUNTIME_IMAGE}
+        working-directory: wildfly-s2i
+      - name: List containers
+        if: failure()
+        run: |
+            docker container ls
