@@ -1,4 +1,4 @@
-name: Wildfly Cekit OpenShift Modules - Build/Run WildFly s2i image on the changes introduced in the PR. 
+name: XXXXXXXXXXXX Wildfly Cekit OpenShift Modules - Build/Run WildFly s2i image on the changes introduced in the PR. 
 on:
   pull_request:
      branches: [ wildfly-s2i-v2-poc ]
