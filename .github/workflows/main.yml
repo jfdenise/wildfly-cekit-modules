@@ -64,7 +64,7 @@ jobs:
       - name: Build 
         run: |
           . ~/cekit${{ env.CEKIT_VERSION }}/bin/activate
-          overrides="{\"modules\": {\"repositories\": [{\"name\":\"wildfly-cekit-modules\",\"path\":\"../../wildfly-cekit-modules\"}]}}"
+          overrides="{\"modules\": {\"repositories\": [{\"name\":\"wildfly-cekit-modules\",\"path\":\"../../../wildfly-cekit-modules\"}]}}"
           pushd wildfly-builder-image
           cekit build --overrides "$overrides" docker
           popd
