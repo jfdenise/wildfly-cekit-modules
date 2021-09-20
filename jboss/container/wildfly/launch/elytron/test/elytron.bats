@@ -289,18 +289,10 @@ EOF
     [ "${result}" = "${expected}" ]
 }
 
-@test "Configure HTTPS - no CONFIGURE_ELYTRON_SSL=true" {
-    CONFIGURE_ELYTRON_SSL=
-    run configure_https
-    echo "${output}"
-    [ "${output}" = "INFO Using PicketBox SSL configuration." ]
-}
-
-@test "Configure HTTPS - CONFIGURE_ELYTRON_SSL=true, missing all required vars" {
+@test "Configure HTTPS - missing all required vars" {
     echo '<!-- ##ELYTRON_TLS## -->' > ${CONFIG_FILE}
     echo '<!-- ##TLS## -->' >> ${CONFIG_FILE}
     expected='WARN Partial HTTPS configuration, the https connector WILL NOT be configured. Missing: HTTPS_PASSWORD HTTPS_KEYSTORE HTTPS_KEYSTORE_TYPE'
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD=
     HTTPS_KEYSTORE=
     HTTPS_KEYSTORE_TYPE=
@@ -311,11 +303,10 @@ EOF
     [ "${output}" = "${expected}" ]
 }
 
-@test "Configure HTTPS - CONFIGURE_ELYTRON_SSL=true, missing HTTPS_PASSWORD" {
+@test "Configure HTTPS - missing HTTPS_PASSWORD" {
     echo '<!-- ##ELYTRON_TLS## -->' > ${CONFIG_FILE}
     echo '<!-- ##TLS## -->' >> ${CONFIG_FILE}
     expected='WARN Partial HTTPS configuration, the https connector WILL NOT be configured. Missing: HTTPS_PASSWORD'
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD=
     HTTPS_KEYSTORE="ks"
     HTTPS_KEYSTORE_TYPE="ks_type"
@@ -326,11 +317,10 @@ EOF
     [ "${output}" = "${expected}" ]
 }
 
-@test "Configure HTTPS - CONFIGURE_ELYTRON_SSL=true, missing HTTPS_KEYSTORE_TYPE" {
+@test "Configure HTTPS - missing HTTPS_KEYSTORE_TYPE" {
     echo '<!-- ##ELYTRON_TLS## -->' > ${CONFIG_FILE}
     echo '<!-- ##TLS## -->' >> ${CONFIG_FILE}
     expected='WARN Partial HTTPS configuration, the https connector WILL NOT be configured. Missing: HTTPS_KEYSTORE_TYPE'
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD="password"
     HTTPS_KEYSTORE="ks"
     HTTPS_KEYSTORE_TYPE=
@@ -341,11 +331,10 @@ EOF
     [ "${output}" = "${expected}" ]
 }
 
-@test "Configure HTTPS - CONFIGURE_ELYTRON_SSL=true, missing HTTPS_KEYSTORE" {
+@test "Configure HTTPS - missing HTTPS_KEYSTORE" {
     echo '<!-- ##ELYTRON_TLS## -->' > ${CONFIG_FILE}
     echo '<!-- ##TLS## -->' >> ${CONFIG_FILE}
     expected='WARN Partial HTTPS configuration, the https connector WILL NOT be configured. Missing: HTTPS_KEYSTORE'
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD="password"
     HTTPS_KEYSTORE=
     HTTPS_KEYSTORE_TYPE="ks_type"
@@ -356,11 +345,10 @@ EOF
     [ "${output}" = "${expected}" ]
 }
 
-@test "Configure HTTPS - CONFIGURE_ELYTRON_SSL=true, no HTTPS_KEY_PASSWORD" {
+@test "Configure HTTPS - no HTTPS_KEY_PASSWORD" {
     echo '<!-- ##ELYTRON_TLS## -->' > ${CONFIG_FILE}
     echo '<!-- ##TLS## -->' >> ${CONFIG_FILE}
     expected='WARN No HTTPS_KEY_PASSWORD was provided; using HTTPS_PASSWORD for Elytron LocalhostKeyManager.'
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD="password"
     HTTPS_KEYSTORE="keystore.ks"
     HTTPS_KEYSTORE_TYPE="ks"
@@ -400,7 +388,6 @@ expected=$(cat <<EOF
    </tls>
 EOF
 )
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD="password"
     HTTPS_KEYSTORE="keystore.ks"
     HTTPS_KEYSTORE_TYPE="ks"
@@ -442,7 +429,6 @@ expected=$(cat <<EOF
    </tls>
 EOF
 )
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD="password"
     HTTPS_KEYSTORE="keystore.ks"
     HTTPS_KEYSTORE_TYPE="ks"
@@ -483,7 +469,6 @@ expected=$(cat <<EOF
    </tls>
 EOF
 )
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD="password"
     HTTPS_KEYSTORE="keystore.ks"
     HTTPS_KEYSTORE_TYPE="ks"
@@ -520,7 +505,6 @@ expected=$(cat <<EOF
    </tls>
 EOF
 )
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD="password"
     HTTPS_KEYSTORE="keystore.ks"
     HTTPS_KEYSTORE_TYPE="ks"
@@ -556,7 +540,6 @@ expected=$(cat <<EOF
    </tls>
 EOF
 )
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD="password"
     HTTPS_KEYSTORE="keystore.ks"
     HTTPS_KEYSTORE_TYPE="ks"
@@ -593,7 +576,6 @@ expected=$(cat <<EOF
    </tls>
 EOF
 )
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD="password"
     HTTPS_KEYSTORE="keystore.ks"
     HTTPS_KEYSTORE_TYPE="ks"
@@ -616,7 +598,6 @@ expected=$(cat <<EOF
    <https-listener name="https" socket-binding="https" ssl-context="LocalhostSslContext" proxy-address-forwarding="true"/>
 EOF
 )
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD="password"
     HTTPS_KEYSTORE="keystore.ks"
     HTTPS_KEYSTORE_TYPE="ks"
@@ -638,7 +619,6 @@ expected=$(cat <<EOF
 <!-- ##ELYTRON_TLS## -->
 EOF
 )
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD=
     HTTPS_KEYSTORE=
     HTTPS_KEYSTORE_TYPE=
@@ -670,7 +650,6 @@ expected=$(cat <<EOF
          </tls>
 EOF
 )
-    CONFIGURE_ELYTRON_SSL=true
     HTTPS_PASSWORD=
     HTTPS_KEYSTORE=
     HTTPS_KEYSTORE_TYPE=
