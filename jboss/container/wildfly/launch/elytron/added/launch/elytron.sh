@@ -241,9 +241,13 @@ EOF
 configure_https() {
 
   if [ -n "${CONFIGURE_ELYTRON_SSL}" ]; then
-    log_error "CONFIGURE_ELYTRON_SSL env variable is no more supported and must be removed, SSL can only be configured using Elytron."
-    log_error "Exiting..."
-    exit
+    if [ "${CONFIGURE_ELYTRON_SSL}" = "true" ]; then
+      log_warning "CONFIGURE_ELYTRON_SSL env variable is set to true, that is no more needed, SSL can only be configured using Elytron."
+    else
+      log_error "CONFIGURE_ELYTRON_SSL env variable is no more supported and must be removed, SSL can only be configured using Elytron."
+      log_error "Exiting..."
+      exit
+    fi
   fi
 
   local ssl="<!-- No SSL configuration discovered -->"
