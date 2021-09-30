@@ -34,6 +34,10 @@ function prepareEnv() {
 }
 
 function configure() {
+  if [ ! -n "$SSO_USE_LEGACY" ] || [ "$SSO_USE_LEGACY" != "true" ]; then
+    return
+  fi
+ 
   local configureSubSystemMode
   getConfigurationMode "##KEYCLOAK_SUBSYSTEM##" "configureSubSystemMode"
   if [ "${configureSubSystemMode}" == "xml" ]; then
