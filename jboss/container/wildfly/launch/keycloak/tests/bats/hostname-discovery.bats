@@ -35,6 +35,24 @@ function run_api_test {
     [ "${lines[0]}" = "${expected}" ]
 }
 
+@test "Compute service name" {
+    local expected="aaa-bbb-ccc-ddd-eee"
+    HOSTNAME="aaa-bbb-ccc-ddd-eee-f-g"
+    run keycloak_compute_service_name
+    echo "CONSOLE:$output"
+    [ "$status" -eq 0 ]
+    [ "${output}" = "${expected}" ]
+}
+
+@test "Get parsed routes" {
+    local expected="http://bc-authoring-rhpamcentr-bsig-cloud.192.168.99.100.nip.io;https://secure-bc-authoring-rhpamcentr-bsig-cloud.192.168.99.100.nip.io"
+    local data=$(cat $JBOSS_HOME/responses/multi-route.json | tr -d \\n)
+    run keycloak_get_routes_from_json "${data}"
+    echo "CONSOLE:$output"
+    [ "$status" -eq 0 ]
+    [ "${output}" = "${expected}" ]
+}
+
 @test "Kubernetes Route API found no routes for the pod" {
     local expected=""
     local mock_response="no-route"

@@ -901,8 +901,8 @@ function add_route_with_default_port() {
 
 # Tries to discover the route using the pod's hostname
 function discover_routes() {
-  local podsuffix=$(python -c "a='${HOSTNAME}'.split('-'); print('-'.join(a[0:len(a)-2]))")
-  echo $(query_routes_from_service $podsuffix)
+  local service_name=$(keycloak_compute_service_name)
+  echo $(query_routes_from_service  $service_name)
 }
 
 # Verify if the container is on OpenShift. The variable K8S_ENV could be set to emulate this behavior
@@ -928,11 +928,8 @@ function query_routes_from_service() {
         -H 'Accept: application/json' \
         ${KUBERNETES_SERVICE_PROTOCOL:-https}://${KUBERNETES_SERVICE_HOST:-kubernetes.default.svc}:${KUBERNETES_SERVICE_PORT:-443}/apis/route.openshift.io/v1/namespaces/${namespace}/routes?fieldSelector=spec.to.name=${serviceName})
     if [[ "${response: -3}" = "200" && "${response::- 3},," = *"items"* ]]; then
-      routes=$(echo ${response::- 3} | \
-          python -c 'import json,sys;obj=json.load(sys.stdin); \
-            routes = [ "https://" + item["spec"]["host"] if "tls" in item["spec"] else "http://" + item["spec"]["host"] for item in obj["items"] ]; \
-            print(";".join("{}".format(route) for route in routes));')
-      echo $routes
+      response=$(echo ${response::- 3})
+      echo $(keycloak_get_routes_from_json "$response")
     else
       log_warning "Fail to query the Route using the Kubernetes API, the Service Account might not have the necessary privileges."
       
@@ -941,4 +938,28 @@ function query_routes_from_service() {
       fi
     fi
   fi
+}
+
+function keycloak_compute_service_name() {
+  IFS_save=$IFS
+  IFS='-' read -ra pod_name_array <<< "${HOSTNAME}"
+  local bound=$((${#pod_name_array[@]}-2))
+  local name=
+  for ((i=0;i<bound;i++)); do
+    name="$name${pod_name_array[$i]}"
+    if (( i < bound-1 )); then
+      name="$name-"
+    fi
+  done
+  IFS=$IFS_save
+  echo $name
+}
+
+function keycloak_get_routes_from_json() {
+  json_reply="${1}"
+  json_routes=$(jq -r '.items[].spec|if .tls then "https" else "http" end + "://" + .host' <<< $json_reply)
+  IFS_save=$IFS
+  json_routes="$(readarray -t JSON_ROUTES_ARRAY <<< "${json_routes}"; IFS=';'; echo "${JSON_ROUTES_ARRAY[*]}")"
+  IFS=$IFS_save
+  echo "${json_routes}"
 }
