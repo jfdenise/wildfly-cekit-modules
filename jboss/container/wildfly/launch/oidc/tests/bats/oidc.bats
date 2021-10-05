@@ -65,18 +65,20 @@ teardown() {
    if (outcome != success) of /subsystem=elytron-oidc-client:read-resource
    /subsystem=elytron-oidc-client:add()
    end-if
-   /subsystem=elytron-oidc-client/provider=sso:add(provider-url=http://foo:9999/auth/realms/master,register-node-at-startup=true,register-node-period=600,ssl-required=external,allow-any-hostname=false)
-   /subsystem=elytron-oidc-client/provider=sso:write-attribute(name=disable-trust-manager,value=true)
-   /subsystem=elytron-oidc-client/provider=sso:write-attribute(name=enable-cors, value=false)
-   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp2.war:add(enable-basic-auth=true, provider=sso)
+   /subsystem=elytron-oidc-client/provider=rh-sso:add(provider-url=http://foo:9999/auth/realms/master,register-node-at-startup=true,register-node-period=600,ssl-required=external,allow-any-hostname=false)
+   /subsystem=elytron-oidc-client/provider=rh-sso:write-attribute(name=disable-trust-manager,value=true)
+   /subsystem=elytron-oidc-client/provider=rh-sso:write-attribute(name=enable-cors, value=false)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp2.war:add(enable-basic-auth=true, provider=rh-sso)
    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp2.war:write-attribute(name=client-id, value=simple-webapp2)
    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp2.war:write-attribute(name=bearer-only, value=false)
-   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:add(enable-basic-auth=true, provider=sso)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:add(enable-basic-auth=true, provider=rh-sso)
    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:write-attribute(name=client-id, value=simple-webapp)
    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:write-attribute(name=bearer-only, value=false)
 
 EOF
 )
+    # This one should be set in image using oidc support
+    SSO_DEFAULT_PROVIDER_NAME="rh-sso"
     SSO_URL="http://foo:9999/auth"
 
     run oidc_configure
@@ -95,20 +97,20 @@ EOF
    if (outcome != success) of /subsystem=elytron-oidc-client:read-resource
    /subsystem=elytron-oidc-client:add()
    end-if
-   /subsystem=elytron-oidc-client/provider=sso:add(provider-url=http://foo:9999/auth/realms/Wildfly,register-node-at-startup=true,register-node-period=600,ssl-required=external,allow-any-hostname=false)
-   /subsystem=elytron-oidc-client/provider=sso:write-attribute(name=disable-trust-manager,value=true)
-   /subsystem=elytron-oidc-client/provider=sso:write-attribute(name=enable-cors, value=false)
-   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp2.war:add(enable-basic-auth=true, provider=sso)
+   /subsystem=elytron-oidc-client/provider=rh-sso:add(provider-url=http://foo:9999/auth/realms/Wildfly,register-node-at-startup=true,register-node-period=600,ssl-required=external,allow-any-hostname=false)
+   /subsystem=elytron-oidc-client/provider=rh-sso:write-attribute(name=disable-trust-manager,value=true)
+   /subsystem=elytron-oidc-client/provider=rh-sso:write-attribute(name=enable-cors, value=false)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp2.war:add(enable-basic-auth=true, provider=rh-sso)
    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp2.war:write-attribute(name=client-id, value=simple-webapp2)
    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp2.war:write-attribute(name=bearer-only, value=false)
-   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:add(enable-basic-auth=true, provider=sso)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:add(enable-basic-auth=true, provider=rh-sso)
    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:write-attribute(name=client-id, value=simple-webapp)
    /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:write-attribute(name=bearer-only, value=false)
 
 EOF
 )
     OIDC_PROVIDER_URL="http://foo:9999/auth/realms/Wildfly"
-    OIDC_PROVIDER_NAME="sso"
+    OIDC_PROVIDER_NAME="rh-sso"
     run oidc_configure
     echo "CONSOLE: ${output}"
     output=$(<"${CLI_SCRIPT_FILE}")
@@ -156,7 +158,6 @@ EOF
    /subsystem=elytron-oidc-client:add()
    end-if
    /subsystem=elytron-oidc-client/provider=keycloak:add(provider-url=http://foo:9999/auth/realms/Wildfly,register-node-at-startup=true,register-node-period=600,ssl-required=none,allow-any-hostname=false)
-   /subsystem=elytron-oidc-client/provider=keycloak:write-attribute(name=realm-public-key,value=pub-key)
    /subsystem=elytron-oidc-client/provider=keycloak:write-attribute(name=truststore,value=/etc/dir/foo.jks)
    /subsystem=elytron-oidc-client/provider=keycloak:write-attribute(name=truststore-password,value=foo-trust-password)
    /subsystem=elytron-oidc-client/provider=keycloak:write-attribute(name=enable-cors, value=true)
@@ -174,7 +175,6 @@ EOF
 )
     OIDC_PROVIDER_URL="http://foo:9999/auth/realms/Wildfly"
     OIDC_PROVIDER_NAME="keycloak"
-    OIDC_REALM_PUBLIC_KEY="pub-key"
     OIDC_SECURE_DEPLOYMENT_SECRET="my-secret"
     OIDC_SECURE_DEPLOYMENT_PRINCIPAL_ATTRIBUTE="preferred_username"
     OIDC_SECURE_DEPLOYMENT_ENABLE_CORS="true"

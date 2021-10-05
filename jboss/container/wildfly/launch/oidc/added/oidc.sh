@@ -18,7 +18,6 @@ function prepareEnv() {
   unset OIDC_PROVIDER_TRUSTSTORE_CERTIFICATE_ALIAS
   unset OIDC_USER_NAME
   unset OIDC_USER_PASSWORD
-  unset OIDC_REALM_PUBLIC_KEY
   unset OIDC_SECURE_DEPLOYMENT_SECRET
   unset OIDC_SECURE_DEPLOYMENT_PRINCIPAL_ATTRIBUTE
   unset OIDC_SECURE_DEPLOYMENT_ENABLE_CORS
@@ -39,10 +38,10 @@ function oidc_configure {
     return
   fi
   if [ -n "${SSO_URL}" ]; then
-    providerName="sso"
+    providerName="rh-sso"
   fi
   OIDC_PROVIDER_NAME="${OIDC_PROVIDER_NAME:-$providerName}"
-  if  [ "${providerName}" == "sso" ] ||  [ "${OIDC_PROVIDER_NAME}" == "keycloak" ]; then
+  if  [ "${providerName}" == "rh-sso" ] ||  [ "${OIDC_PROVIDER_NAME}" == "keycloak" ]; then
     source $JBOSS_HOME/bin/launch/oidc-keycloak-hooks.sh
     oidc_keycloak_mapEnvVariables
   fi
@@ -95,11 +94,6 @@ function oidc_configure_subsystem() {
       ${add_extension}
       ${add_subsystem}
       ${provider}:add(provider-url=${OIDC_PROVIDER_URL},register-node-at-startup=true,register-node-period=600,ssl-required=${OIDC_PROVIDER_SSL_REQUIRED:-external},allow-any-hostname=false)"
-  
-    if [ -n "$OIDC_REALM_PUBLIC_KEY" ]; then
-      cli="$cli
-        ${provider}:write-attribute(name=realm-public-key,value=${OIDC_REALM_PUBLIC_KEY})"
-    fi
     
     if [ -n "$OIDC_PROVIDER_TRUSTSTORE" ] && [ -n "$OIDC_PROVIDER_TRUSTSTORE_DIR" ]; then
       cli="$cli
