@@ -173,7 +173,12 @@ function oidc_configure_secure_deployment() {
   context_root=
   redirect_path=
   client_id=
-  web_xml=$(read_web_dot_xml $f WEB-INF/web.xml)
+  oidc_json_file=$(read_file_in_war $f WEB-INF/oidc.json)
+  if [ -n "$oidc_json_file" ]; then
+    log_info "Deployment $f contains WEB-INF/oidc.json descriptor, ignoring it."
+    return
+  fi
+  web_xml=$(read_file_in_war $f WEB-INF/web.xml)
   if [ -n "$web_xml" ]; then
     requested_auth_method=$(echo $web_xml | xmllint --nowarning --xpath "string(//*[local-name()='auth-method'])" - | sed ':a;N;$!ba;s/\n//g' | tr -d '[:space:]')
     if [[ $requested_auth_method == "OIDC" ]]; then
@@ -184,7 +189,7 @@ function oidc_configure_secure_deployment() {
         module_name=$(echo $web_xml | xmllint --nowarning --xpath "//*[local-name()='module-name']/text()" -)
       fi
 
-      local jboss_web_xml=$(read_web_dot_xml $f WEB-INF/jboss-web.xml)
+      local jboss_web_xml=$(read_file_in_war $f WEB-INF/jboss-web.xml)
       if [ -n "$jboss_web_xml" ]; then
         if [[ $jboss_web_xml == *"<context-root>"* ]]; then
           context_root=$(echo $jboss_web_xml | xmllint --nowarning --xpath "string(//*[local-name()='context-root'])" - | sed ':a;N;$!ba;s/\n//g' | tr -d '[:space:]')
@@ -248,7 +253,7 @@ function oidc_configure_secure_deployment() {
   fi
 }
 
-function read_web_dot_xml {
+function read_file_in_war {
   local jarfile="${1}"
   local filename="${2}"
   local result=
@@ -260,7 +265,11 @@ function read_web_dot_xml {
   else
     file_exists=$(unzip -l "$jarfile" "$filename")
     if [[ $file_exists == *"$filename"* ]]; then
-      result=$(unzip -p "$jarfile" "$filename" | xmllint --format --recover --nowarning - | sed ':a;N;$!ba;s/\n//g')
+      if [[ "${filename}" == *.xml ]]; then
+        result=$(unzip -p "$jarfile" "$filename" | xmllint --format --recover --nowarning - | sed ':a;N;$!ba;s/\n//g')
+      else
+        result=$(unzip -p "$jarfile" "$filename")
+      fi
     fi
   fi
   echo "$result"

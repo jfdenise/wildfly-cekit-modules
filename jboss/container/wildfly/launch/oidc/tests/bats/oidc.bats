@@ -32,6 +32,7 @@ setup() {
   cp $BATS_TEST_DIRNAME/../../../../../../../test-common/configuration/standalone-openshift.xml $JBOSS_HOME/standalone/configuration
   cp $BATS_TEST_DIRNAME/simple-webapp.war $JBOSS_HOME/standalone/deployments
   cp $BATS_TEST_DIRNAME/simple-webapp2.war $JBOSS_HOME/standalone/deployments
+  cp $BATS_TEST_DIRNAME/simple-webapp3.war $JBOSS_HOME/standalone/deployments
 }
 
 teardown() {
