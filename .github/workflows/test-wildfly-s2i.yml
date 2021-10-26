@@ -28,7 +28,7 @@ jobs:
           path: wildfly-cekit-modules
       - uses: actions/checkout@v2
         with:
-            repository: wildfly/wildfly-s2i
+            repository: jfdenise/wildfly-s2i
             ref: v2
             path: wildfly-s2i
       - uses: actions/checkout@v2
@@ -90,13 +90,10 @@ jobs:
            sudo mv s2i /usr/bin
            which s2i
            s2i version
-      - name: Build images
+      - name: Build image
         run: |
           . ~/cekit${{ env.CEKIT_VERSION }}/bin/activate
           pushd wildfly-builder-image
-          cekit build docker
-          popd
-          pushd wildfly-runtime-image
           cekit build docker
           popd
           docker image ls
@@ -114,6 +111,7 @@ jobs:
             sed -i "s|$comment|$replacement|" "$feature"
             sed -i "s|$legacyPlaceHolder|$legacyReplacement|" "$feature"
           done
+          . ~/cekit${{ env.CEKIT_VERSION }}/bin/activate
           pushd custom-cloud-image/wildfly-builder-image
             cekit test --image=wildfly/wildfly-s2i-jdk11:dev-${{ env.CLOUD_FP_VERSION }} behave --wip
           popd
