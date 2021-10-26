@@ -50,7 +50,7 @@ jobs:
           mkdir -p custom-cloud-image/docker/repository/org/wildfly/cloud/wildfly-preview-cloud-galleon-pack/$cloudVersion
           cp wildfly-cloud-galleon-pack/target/wildfly-cloud-galleon-pack-$cloudVersion.zip custom-cloud-image/docker/repository/org/wildfly/cloud/wildfly-cloud-galleon-pack/$cloudVersion
           cp wildfly-preview-cloud-galleon-pack/target/wildfly-preview-cloud-galleon-pack-$cloudVersion.zip custom-cloud-image/docker/repository/org/wildfly/cloud/wildfly-preview-cloud-galleon-pack/$cloudVersion
-          docker_file=docker/Dockerfile
+          docker_file=custom-cloud-image/docker/Dockerfile
             cat <<EOF > $docker_file
              FROM wildfly/wildfly-s2i-jdk11:latest
              RUN mkdir -p /tmp/artifacts/m2
