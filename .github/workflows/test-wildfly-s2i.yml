@@ -113,7 +113,7 @@ jobs:
           done
           . ~/cekit${{ env.CEKIT_VERSION }}/bin/activate
           pushd custom-cloud-image/wildfly-builder-image
-            cekit test --image=wildfly/wildfly-s2i-jdk11:dev-${{ env.CLOUD_FP_VERSION }} behave --wip
+            cekit test --image=wildfly/wildfly-s2i-jdk11:dev-${{ env.CLOUD_FP_VERSION }} behave
           popd
         working-directory: wildfly-cloud-galleon-pack
       - name: List containers
