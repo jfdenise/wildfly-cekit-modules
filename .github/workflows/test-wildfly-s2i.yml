@@ -104,8 +104,8 @@ jobs:
           cp -r ../wildfly-s2i/wildfly-builder-image ./custom-cloud-image
           cp -r ../wildfly-s2i/wildfly-modules ./custom-cloud-image
           comment="### PLACEHOLDER FOR CLOUD CUSTOM TESTING ###"
-          replacement="\|MAVEN_ARGS_APPEND\|-Dversion.wildfly.cloud.galleon.pack=$cloudVersion\|"
-          legacyReplacement="org.wildfly.cloud:wildfly-cloud-galleon-pack:$cloudVersion\|"
+          replacement="\|MAVEN_ARGS_APPEND\|-Dversion.wildfly.cloud.galleon.pack=${{ env.CLOUD_FP_VERSION }}\|"
+          legacyReplacement="org.wildfly.cloud:wildfly-cloud-galleon-pack:${{ env.CLOUD_FP_VERSION }}\|"
           legacyPlaceHolder="org.wildfly.cloud:wildfly-cloud-galleon-pack:.*\|"
           for feature in custom-cloud-image/wildfly-builder-image/tests/features/*.feature; do
             sed -i "s|$comment|$replacement|" "$feature"
