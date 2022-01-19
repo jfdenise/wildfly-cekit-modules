@@ -1,12 +1,6 @@
 #!/bin/sh
 # Openshift EAP CD launch script routines for configuring messaging
 
-if [ -z "${TEST_ACTIVEMQ_SUBSYSTEM_FILE_INCLUDE}" ]; then
-    ACTIVEMQ_SUBSYSTEM_FILE=$JBOSS_HOME/bin/launch/activemq-subsystem.xml
-else
-    ACTIVEMQ_SUBSYSTEM_FILE=${TEST_ACTIVEMQ_SUBSYSTEM_FILE_INCLUDE}
-fi
-
 # Messaging doesn't currently support configuration using env files, but this is
 # a start at what it would need to do to clear the env.  The reason for this is
 # that the HornetQ subsystem is automatically configured if no service mappings
@@ -63,9 +57,6 @@ function prepareEnv() {
 }
 
 function configure() {
-  
-    DISABLE_EMBEDDED_JMS_BROKER="always"
-
   configure_artemis_address
   inject_brokers
   configure_mq
@@ -126,71 +117,9 @@ function configure_mq() {
   if [ "$REMOTE_AMQ_BROKER" != "true" ] ; then
     configure_mq_cluster_password
 
-    local messaging_subsystem_config_mode
-    getConfigurationMode "<!-- ##MESSAGING_SUBSYSTEM_CONFIG## -->" "messaging_subsystem_config_mode"
-
     destinations=$(configure_mq_destinations "${messaging_subsystem_config_mode}" "default")
-
-    local error_message_text
     if [ -n "${destinations}" ]; then
-      error_message_text="You have configured messaging queues via 'MQ_QUEUES' or 'HORNETQ_QUEUES' or topics via 'MQ_TOPICS' or 'HORNETQ_TOPICS' variables"
-    else
-      error_message_text="An embedded messaging broker is added by default, to disable configuring an embedded messaging broker set the DISABLE_EMBEDDED_JMS_BROKER environment variable to true"
-    fi
-
-    local embeddedBroker="false"
-    local activemq_subsystem
-    if [ "${messaging_subsystem_config_mode}" = "xml" ]; then
-      # We need the broker if they configured destinations or didn't explicitly disable the broker AND there's a point to doing it because the marker exists
-      if ([ -n "${destinations}" ] || ([ "x${DISABLE_EMBEDDED_JMS_BROKER}" != "xtrue" ] && [ "x${DISABLE_EMBEDDED_JMS_BROKER}" != "xalways" ]) ) && grep -q '<!-- ##MESSAGING_SUBSYSTEM_CONFIG## -->' ${CONFIG_FILE}; then
-        activemq_subsystem=$(sed -e "s|<!-- ##DESTINATIONS## -->|${destinations}|" <"${ACTIVEMQ_SUBSYSTEM_FILE}" | sed ':a;N;$!ba;s|\n|\\n|g')
-        sed -i "s|<!-- ##MESSAGING_SUBSYSTEM_CONFIG## -->|${activemq_subsystem%$'\n'}|" "${CONFIG_FILE}"
-        embeddedBroker="true"
-      fi
-    elif [ "${messaging_subsystem_config_mode}" = "cli" ]; then
-      # We need the broker if there are destinations or it wasn't explicitly disabled.
-      # In the new configuration we cannot rely on marker precense since it is not supplied by default, and not supplying it does not mean
-      # we don't want the embedded server configuration.
-      # If we do not want the embeded server added when there are no destinations, then DISABLE_EMBEDDED_JMS_BROKER should be explicitely set to always.
-      if ([ -n "${destinations}" ] || [ "x${DISABLE_EMBEDDED_JMS_BROKER}" != "xtrue" ]) && [ "x${DISABLE_EMBEDDED_JMS_BROKER}" != "xalways" ]; then
-        activemq_subsystem=$(add_messaging_default_server_cli "${error_message_text}" "${destinations}")
-        if [ -n "${activemq_subsystem}" ]; then
-          echo "${activemq_subsystem}" >> "${CLI_SCRIPT_FILE}"
-          embeddedBroker="true"
-        fi
-      fi
-    fi
-
-    if [ "${embeddedBroker}" = "true" ]; then
-
-      echo "Configuration of an embedded messaging broker within the appserver is enabled but is not recommended. Support for such a configuration will be removed in a future release." >> "${CONFIG_WARNING_FILE}"
-      if [ "x${DISABLE_EMBEDDED_JMS_BROKER}" != "xtrue" ]; then
-        echo "If you are not configuring messaging destinations, to disable configuring an embedded messaging broker set the DISABLE_EMBEDDED_JMS_BROKER environment variable to true." >> "${CONFIG_WARNING_FILE}"
-      fi
-
-      local messaging_ports_config_mode
-      getConfigurationMode "<!-- ##MESSAGING_PORTS## -->" "messaging_ports_config_mode"
-
-      if [ "${messaging_ports_config_mode}" = "xml" ]; then
-        sed -i 's|<!-- ##MESSAGING_PORTS## -->|<socket-binding name="messaging" port="5445"/><socket-binding name="messaging-throughput" port="5455"/>|' "${CONFIG_FILE}"
-      elif [ "${messaging_ports_config_mode}" = "cli" ]; then
-        local cli_operations
-        IFS= read -rd '' cli_operations << EOF
-        if (outcome == success) of /socket-binding-group=standard-sockets/socket-binding=messaging:read-resource
-          echo ${error_message_text}. Fix your configuration to not contain a socket-binding named 'messaging' for this to happen. >> \${error_file}
-          exit
-        end-if
-
-        if (outcome == success) of /socket-binding-group=standard-sockets/socket-binding=messaging-throughput:read-resource
-          echo ${error_message_text}. Fix your configuration to not contain a socket-binding named 'messaging-throughput' for this to happen. >> \${error_file}
-          exit
-        end-if
-
-        /socket-binding-group=standard-sockets/socket-binding=messaging:add(port=5445)
-        /socket-binding-group=standard-sockets/socket-binding=messaging-throughput:add(port=5455)
-EOF
-      echo "${cli_operations}" >> "${CLI_SCRIPT_FILE}"
-      fi
+      echo "${destinations}" >> "${CLI_SCRIPT_FILE}"
     fi
   fi
 }
@@ -930,7 +859,7 @@ EOF
 
   if [ "${has_ee_subsystem}" -eq 0 ]; then
     if [ "${default_jms_config_mode}" = "xml" ]; then
-      if [ "$REMOTE_AMQ_BROKER" = "true" ] || ([ -n "${MQ_QUEUES}" ] || [ -n "${HORNETQ_QUEUES}" ] || [ -n "${MQ_TOPICS}" ] || [ -n "${HORNETQ_TOPICS}" ] || [ "x${DISABLE_EMBEDDED_JMS_BROKER}" != "xtrue" ]) && [ "x${DISABLE_EMBEDDED_JMS_BROKER}" != "xalways" ];
+      if [ "$REMOTE_AMQ_BROKER" = "true" ] || [ -n "${MQ_QUEUES}" ] || [ -n "${HORNETQ_QUEUES}" ] || [ -n "${MQ_TOPICS}" ] || [ -n "${HORNETQ_TOPICS}" ];
       then
         # new format
         sed -i "s|jms-connection-factory=\"##DEFAULT_JMS##\"|${defaultJms}|" $CONFIG_FILE
@@ -943,7 +872,7 @@ EOF
         sed -i "s|##DEFAULT_JMS##||" $CONFIG_FILE
       fi
     elif [ "${default_jms_config_mode}" = "cli" ]; then
-      if ([ "$REMOTE_AMQ_BROKER" = "true" ] || ([ -n "${MQ_QUEUES}" ] || [ -n "${HORNETQ_QUEUES}" ] || [ -n "${MQ_TOPICS}" ] || [ -n "${HORNETQ_TOPICS}" ] || [ "x${DISABLE_EMBEDDED_JMS_BROKER}" != "xtrue" ]) && [ "x${DISABLE_EMBEDDED_JMS_BROKER}" != "xalways" ]) && [ -n "${defaultJmsConnectionFactoryJndi}" ]; then
+      if ([ "$REMOTE_AMQ_BROKER" = "true" ] || [ -n "${MQ_QUEUES}" ] || [ -n "${HORNETQ_QUEUES}" ] || [ -n "${MQ_TOPICS}" ] || [ -n "${HORNETQ_TOPICS}" ]) && [ -n "${defaultJmsConnectionFactoryJndi}" ]; then
         echo "/subsystem=ee/service=default-bindings:write-attribute(name=jms-connection-factory, value=\"${defaultJmsConnectionFactoryJndi}\")" >> "${CLI_SCRIPT_FILE}"
       else
           echo "do not remove the factory"
@@ -973,133 +902,4 @@ add_messaging_default_server() {
   sed -i "s|java:jboss/DefaultJMSConnectionFactory||g" $CONFIG_FILE
   # this will be on the remote ConnectionFactory, so rename the local one until the embedded broker is dropped.
   sed -i "s|java:/JmsXA|java:/JmsXALocal|" $CONFIG_FILE
-}
-
-
-# Arguments:
-# $1 - error message text describing the source
-# $2 - destinations - Optional
-add_messaging_default_server_cli() {
-  declare error_message_text="${1}" destinations="${2}"
-
-  local has_security_subsystem
-  local xpath="\"//*[local-name()='subsystem' and starts-with(namespace-uri(), 'urn:jboss:domain:security:')]\""
-  testXpathExpression "${xpath}" "has_security_subsystem"
-
-  local has_elytron_subsystem
-  local xpath="\"//*[local-name()='subsystem' and starts-with(namespace-uri(), 'urn:wildfly:elytron:')]\""
-  testXpathExpression "${xpath}" "has_elytron_subsystem"
-
-  if [ "${has_security_subsystem}" -ne 0 ]; then
-    if [ "${has_elytron_subsystem}" -ne 0 ]; then
-      # Just ignore
-      return 0
-    fi
-  fi
-
-  local has_remoting_subsystem
-  local xpath="\"//*[local-name()='subsystem' and starts-with(namespace-uri(), 'urn:jboss:domain:remoting:')]\""
-  testXpathExpression "${xpath}" "has_remoting_subsystem"
-
-  if [ "${has_remoting_subsystem}" -ne 0 ]; then
-      # Just ignore
-      return 0
-  fi
-
-  local has_messaging_subsystem
-  local xpath="\"//*[local-name()='subsystem' and starts-with(namespace-uri(), 'urn:jboss:domain:messaging-activemq:')]\""
-  testXpathExpression "${xpath}" "has_messaging_subsystem"
-
-  if [ "${has_messaging_subsystem}" -ne 0 ]; then
-      # Just ignore
-      return 0
-  fi
-
-  local cli_operations
-  IFS= read -rd '' cli_operations << EOF
-
-    if (outcome == success) of /subsystem=messaging-activemq/server=default:read-resource
-      echo ${error_message_text}. Fix your configuration to not contain a default server configured on messaging-activemq subsystem for this to happen. >> \${error_file}
-      exit
-    end-if
-
-    batch
-      /subsystem=messaging-activemq/server=default:add(journal-pool-files=10, statistics-enabled="\${wildfly.messaging-activemq.statistics-enabled:\${wildfly.statistics-enabled:false}}")
-EOF
-
-  if [ -n "${destinations}" ]; then
-    cli_operations="${cli_operations}
-                    ${destinations}"
-  fi
-
-  IFS= read -rd '' tmp_operations << EOF
-
-      /subsystem=messaging-activemq/server=default/http-connector=http-connector:add(socket-binding=http-messaging, endpoint=http-acceptor)
-      /subsystem=messaging-activemq/server=default/http-connector=http-connector-throughput:add(socket-binding=http-messaging, endpoint=http-acceptor-throughput, params={"batch-delay"="50"})
-
-      /subsystem=messaging-activemq/server=default/http-acceptor=http-acceptor:add(http-listener=default)
-      /subsystem=messaging-activemq/server=default/http-acceptor=http-acceptor-throughput:add(http-listener=default, params={batch-delay=50,direct-deliver=false})
-
-      /subsystem=messaging-activemq/server=default/in-vm-connector=in-vm:add(server-id=0, params={"buffer-pooling"="false"})
-      /subsystem=messaging-activemq/server=default/in-vm-acceptor=in-vm:add(server-id=0, params={"buffer-pooling"="false"})
-
-      /subsystem=messaging-activemq/server=default/jms-queue=ExpiryQueue:add(entries=["java:/jms/queue/ExpiryQueue"])
-      /subsystem=messaging-activemq/server=default/jms-queue=DLQ:add(entries=["java:/jms/queue/DLQ"])
-
-      /subsystem=messaging-activemq/server=default/connection-factory=InVmConnectionFactory:add(connectors=["in-vm"], entries=["java:/ConnectionFactory"])
-      /subsystem=messaging-activemq/server=default/connection-factory=RemoteConnectionFactory:add(connectors=["http-connector"], entries=["java:jboss/exported/jms/RemoteConnectionFactory"], reconnect-attempts=-1)
-
-      /subsystem=messaging-activemq/server=default/security-setting=#:add()
-      /subsystem=messaging-activemq/server=default/security-setting=#/role=guest:add(delete-non-durable-queue=true, create-non-durable-queue=true, consume=true, send=true)
-
-      /subsystem=messaging-activemq/server=default/address-setting=#:add(dead-letter-address=jms.queue.DLQ, expiry-address=jms.queue.ExpiryQueue, max-size-bytes=10485760L, page-size-bytes=2097152, message-counter-history-day-limit=10, redistribution-delay=1000L)
-      /subsystem=messaging-activemq/server=default/pooled-connection-factory=activemq-ra:add(transaction=xa, connectors=["in-vm"], entries=["java:/JmsXA java:jboss/DefaultJMSConnectionFactory"])
-
-    run-batch
-EOF
-  cli_operations="${cli_operations}${tmp_operations}"
-
-  if [ "${has_security_subsystem}" -ne 0 ]; then
-    cli_operations="${cli_operations}
-      /subsystem=messaging-activemq/server=default:write-attribute(name=elytron-domain, value=ApplicationDomain)"
-  fi
-
-  echo "${cli_operations}"
-}
-
-can_add_embedded(){
-  local has_security_subsystem
-  local xpath="\"//*[local-name()='subsystem' and starts-with(namespace-uri(), 'urn:jboss:domain:security:')]\""
-  testXpathExpression "${xpath}" "has_security_subsystem"
-
-  local has_elytron_subsystem
-  local xpath="\"//*[local-name()='subsystem' and starts-with(namespace-uri(), 'urn:wildfly:elytron:')]\""
-  testXpathExpression "${xpath}" "has_elytron_subsystem"
-
-  if [ "${has_security_subsystem}" -ne 0 ]; then
-    if [ "${has_elytron_subsystem}" -ne 0 ]; then
-      # Just ignore
-      return 1
-    fi
-  fi
-
-  local has_remoting_subsystem
-  local xpath="\"//*[local-name()='subsystem' and starts-with(namespace-uri(), 'urn:jboss:domain:remoting:')]\""
-  testXpathExpression "${xpath}" "has_remoting_subsystem"
-
-  if [ "${has_remoting_subsystem}" -ne 0 ]; then
-      # Just ignore
-      return 1
-  fi
-
-  local has_messaging_subsystem
-  local xpath="\"//*[local-name()='subsystem' and starts-with(namespace-uri(), 'urn:jboss:domain:messaging-activemq:')]\""
-  testXpathExpression "${xpath}" "has_messaging_subsystem"
-
-  if [ "${has_messaging_subsystem}" -ne 0 ]; then
-      # Just ignore
-      return 1
-  fi
-
-  return 0
 }
