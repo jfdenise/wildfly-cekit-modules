@@ -1,6 +1,12 @@
 #!/bin/sh
 # Openshift EAP CD launch script routines for configuring messaging
 
+if [ -z "${TEST_ACTIVEMQ_SUBSYSTEM_FILE_INCLUDE}" ]; then
+    ACTIVEMQ_SUBSYSTEM_FILE=$JBOSS_HOME/bin/launch/activemq-subsystem.xml
+else
+    ACTIVEMQ_SUBSYSTEM_FILE=${TEST_ACTIVEMQ_SUBSYSTEM_FILE_INCLUDE}
+fi
+
 # Messaging doesn't currently support configuration using env files, but this is
 # a start at what it would need to do to clear the env.  The reason for this is
 # that the HornetQ subsystem is automatically configured if no service mappings
