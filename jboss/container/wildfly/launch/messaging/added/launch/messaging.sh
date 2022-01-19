@@ -63,11 +63,8 @@ function prepareEnv() {
 }
 
 function configure() {
-   can_add_embedded
-
-  if [ $? -eq 1 ]; then
+  
     DISABLE_EMBEDDED_JMS_BROKER="always"
-  fi
 
   configure_artemis_address
   inject_brokers
@@ -949,7 +946,8 @@ EOF
       if ([ "$REMOTE_AMQ_BROKER" = "true" ] || ([ -n "${MQ_QUEUES}" ] || [ -n "${HORNETQ_QUEUES}" ] || [ -n "${MQ_TOPICS}" ] || [ -n "${HORNETQ_TOPICS}" ] || [ "x${DISABLE_EMBEDDED_JMS_BROKER}" != "xtrue" ]) && [ "x${DISABLE_EMBEDDED_JMS_BROKER}" != "xalways" ]) && [ -n "${defaultJmsConnectionFactoryJndi}" ]; then
         echo "/subsystem=ee/service=default-bindings:write-attribute(name=jms-connection-factory, value=\"${defaultJmsConnectionFactoryJndi}\")" >> "${CLI_SCRIPT_FILE}"
       else
-        echo "/subsystem=ee/service=default-bindings:undefine-attribute(name=jms-connection-factory)" >> "${CLI_SCRIPT_FILE}"
+          echo "do not remove the factory"
+        #echo "/subsystem=ee/service=default-bindings:undefine-attribute(name=jms-connection-factory)" >> "${CLI_SCRIPT_FILE}"
       fi
     fi
   fi
