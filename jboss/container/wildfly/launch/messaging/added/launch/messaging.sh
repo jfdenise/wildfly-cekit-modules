@@ -571,7 +571,6 @@ function inject_brokers() {
 
   local subsystem_added=false
   REMOTE_AMQ_BROKER=false
-  REMOTE_AMQ6=false
   REMOTE_AMQ7=false
   has_default_cnx_factory=false
 
@@ -615,6 +614,10 @@ function inject_brokers() {
       # generally MQ
       prefix=${broker#*=}
 
+      if [ "${type}" == "AMQ" ]; then
+         echo "You provided amq as broker type (via MQ_SERVICE_PREFIX_MAPPING environment variable): $brokers. However, AMQ6 is not supported. " >> "${CONFIG_ERROR_FILE}"
+         continue
+      fi
       # XXX: only tcp (openwire) is supported by EAP
       # Protocol environment variable name format: [NAME]_[BROKER_TYPE]_PROTOCOL
       protocol=$(find_env "${prefix}_PROTOCOL" "tcp")
@@ -686,10 +689,6 @@ function inject_brokers() {
       local driver
       local archive
       case "$type" in
-        "AMQ")
-         echo "AMQ6, do NOTHING, NOT SUPPORTED"
-         exit 1
-          ;;
         "AMQ7")
           # Currently it is not supported multi AMQ7 broker support
           if [ "${REMOTE_AMQ7}" = "true" ]; then
@@ -874,18 +873,6 @@ EOF
     fi
   fi
 
-}
-
-disable_unused_rar() {
-  local resource_adapters_mode
-  getConfigurationMode "<!-- ##RESOURCE_ADAPTERS## -->" "resource_adapters_mode"
-
-  # Put down a skipdeploy marker for the legacy activemq-rar.rar unless there is a .dodeploy marker
-  # or the rar is mentioned in the config file
-  local base_rar="$JBOSS_HOME/standalone/deployments/activemq-rar.rar"
-  if [ -e "${base_rar}" ] && [ ! -e "${base_rar}.dodeploy" ] && ! grep -q -E "activemq-rar\.rar" $CONFIG_FILE && ! ([ "${resource_adapters_mode}" = "cli" ] && [ "${REMOTE_AMQ6}" = "true" ]); then
-    touch "$JBOSS_HOME/standalone/deployments/activemq-rar.rar.skipdeploy"
-  fi
 }
 
 add_messaging_default_server() {
