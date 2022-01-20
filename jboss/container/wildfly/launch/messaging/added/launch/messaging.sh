@@ -687,21 +687,8 @@ function inject_brokers() {
       local archive
       case "$type" in
         "AMQ")
-          # This is the legacy AMQ configuration. In this case we only configure the resource adapters subsystem adding activemq-rar.rar
-          # It is possible configure more than one
-          driver="amq"
-          archive="activemq-rar.rar"
-          REMOTE_AMQ_BROKER=true
-          REMOTE_AMQ6=true
-
-          if [ "${resource_adapters_mode}" = "xml" ]; then
-            ra=$(generate_resource_adapter ${service_name} ${jndi} ${username} ${password} ${protocol} ${host} ${port} ${prefix} ${archive} ${driver} "${queues}" "${topics}" "${tracking}" ${counter})
-            sed -i "s|<!-- ##RESOURCE_ADAPTERS## -->|${ra%$'\n'}<!-- ##RESOURCE_ADAPTERS## -->|" $CONFIG_FILE
-          elif [ "${resource_adapters_mode}" = "cli" ]; then
-            ra=$(generate_resource_adapter_cli ${service_name} ${jndi} ${username} ${password} ${protocol} ${host} ${port} ${prefix} ${archive} ${driver} "${queues}" "${topics}" "${tracking}" ${counter})
-            echo "${ra}" >> "${CLI_SCRIPT_FILE}"
-          fi
-
+         echo "AMQ6, do NOTHING, NOT SUPPORTED"
+         exit 1
           ;;
         "AMQ7")
           # Currently it is not supported multi AMQ7 broker support
