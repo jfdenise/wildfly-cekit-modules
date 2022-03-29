@@ -61,7 +61,10 @@ else
     exit 1
   fi
   cd ..
-
+  if [ "x$deleteBuildArtifacts" == "xtrue"  ]; then
+    echo "Build artifacts are not kept, will be removed from galleon local cache"
+    cp -r $TMP_GALLEON_LOCAL_MAVEN_REPO $GALLEON_LOCAL_MAVEN_REPO
+  fi
   rm /tmp/offliner.jar && rm /tmp/offliner.txt
 fi
 
