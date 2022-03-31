@@ -24,6 +24,7 @@ jobs:
               exit 0
             fi
           done
+          echo "No change detected that would impact the image, skipping the job"
       - name: Update hosts - linux
         if: matrix.os == 'ubuntu-latest' && env.IMPACT_IMAGE == 'true'
         run: |
