@@ -19,7 +19,14 @@ jobs:
       - run: |
           for changed_file in ${{ steps.files.outputs.all }}; do
             echo "Do something with this ${changed_file}."
+            if [[ "${changed_file}" =~ ^jboss/container/s2i.* ]]; then
+              impact_image="true"
+            fi
           done
+          if [ -z "${impact_image}" ]; then
+            echo "The change doesn't impact the image, skipping"
+            exit 0
+          fi
 #      - name: Update hosts - linux
 #        if: matrix.os == 'ubuntu-latest'
 #        run: |
