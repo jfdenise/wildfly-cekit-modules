@@ -1,5 +1,6 @@
 GALLEON_GENERIC_LAYERS_DEFINITION="$JBOSS_CONTAINER_WILDFLY_S2I_LEGACY_GALLEON_MODULE"/provisioning/generic_layers
 GALLEON_GENERIC_PROVISIONING_DEFINITION="$JBOSS_CONTAINER_WILDFLY_S2I_LEGACY_GALLEON_MODULE"/provisioning/generic_provisioning
+DOCKER_BUILD_STRATEGY_SETTINGS=/opt/app-root/src/galleon/settings.xml
 
 function galleon_patch_generic_config() {
    included_layers=
@@ -98,8 +99,13 @@ function galleon_init_mvn_env() {
       MAVEN_SETTINGS_XML="${GALLEON_LOCAL_PROVISIONING}/settings.xml"
       log_info "Using ${MAVEN_SETTINGS_XML} when provisioning server."
     else
-      cp $HOME/.m2/settings.xml /tmp/galleon-settings.xml
-      MAVEN_SETTINGS_XML=/tmp/galleon-settings.xml
+      if [ -f "${DOCKER_BUILD_STRATEGY_SETTINGS}" ]; then
+        MAVEN_SETTINGS_XML="${DOCKER_BUILD_STRATEGY_SETTINGS}"
+        log_info "Using ${MAVEN_SETTINGS_XML} when provisioning server."
+      else
+        cp $HOME/.m2/settings.xml /tmp/galleon-settings.xml
+        MAVEN_SETTINGS_XML=/tmp/galleon-settings.xml
+      fi
     fi
     if test -r "${JBOSS_CONTAINER_MAVEN_DEFAULT_MODULE}"/scl-enable-maven; then
       source "${JBOSS_CONTAINER_MAVEN_DEFAULT_MODULE}"/scl-enable-maven
