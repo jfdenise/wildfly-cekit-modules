@@ -38,9 +38,6 @@ function configure() {
 }
 
 function oidc_configure {
-  if [ -n "$SSO_USE_LEGACY" ] && [ "$SSO_USE_LEGACY" == "true" ]; then
-    return
-  fi
   if  [ -n "${SSO_URL}" ] || [ "${OIDC_PROVIDER_NAME}" == "rh-sso" ] ||  [ "${OIDC_PROVIDER_NAME}" == "keycloak" ]; then
     source $JBOSS_HOME/bin/launch/oidc-keycloak-hooks.sh
     oidc_keycloak_mapEnvVariables
