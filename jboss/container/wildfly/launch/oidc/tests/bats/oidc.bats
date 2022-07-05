@@ -35,6 +35,8 @@ setup() {
   cp $BATS_TEST_DIRNAME/simple-webapp.war $JBOSS_HOME/standalone/deployments
   cp $BATS_TEST_DIRNAME/simple-webapp2.war $JBOSS_HOME/standalone/deployments
   cp $BATS_TEST_DIRNAME/simple-webapp3.war $JBOSS_HOME/standalone/deployments
+  cp $BATS_TEST_DIRNAME/simple-webapp4.war $JBOSS_HOME/standalone/deployments
+  cp $BATS_TEST_DIRNAME/simple-webapp5.war $JBOSS_HOME/standalone/deployments
   mkdir -p $JBOSS_HOME/standalone/data/content/66/62c9cbe0842c0b6e0b097329748f9c2e04515e/
   cp $BATS_TEST_DIRNAME/simple-webapp.war $JBOSS_HOME/standalone/data/content/66/62c9cbe0842c0b6e0b097329748f9c2e04515e/content
   mkdir -p $JBOSS_HOME/standalone/data/content/67/62c9cbe0842c0b6e0b097329748f9c2e04515e/
@@ -193,6 +195,68 @@ EOF
     OIDC_PROVIDER_TRUSTSTORE="foo.jks"
     OIDC_PROVIDER_TRUSTSTORE_DIR="/etc/dir"
     OIDC_PROVIDER_TRUSTSTORE_PASSWORD="foo-trust-password"
+    run oidc_configure
+    echo "CONSOLE: ${output}"
+    output=$(<"${CLI_SCRIPT_FILE}")
+    normalize_spaces_new_lines
+    echo "FILE: ${output}"
+    [ "${output}" = "${expected}" ]
+}
+
+@test "manual configuration" {
+    expected=$(cat << EOF
+       if (outcome != success) of /extension=org.wildfly.extension.elytron-oidc-client:read-resource
+   /extension=org.wildfly.extension.elytron-oidc-client:add()
+   end-if
+   if (outcome != success) of /subsystem=elytron-oidc-client:read-resource
+   /subsystem=elytron-oidc-client:add()
+   end-if
+   /subsystem=elytron-oidc-client/realm=demo/:add(realm-public-key="MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArujsIJfA8JYuInj9r1InmUsWZPewBeTOcVPB8dj5CxanDwNANtqPKaSKUFRUm/FWkcelkQlQSmETauxHVG3fYCqpsCWe9fte7JQal/qwGfUca0tkVUIfd7rfiCa1Z2JdgUsiVCeD4PJjM2YWzzrm1inoUBXSXavzBzV9GsinMXjtjjeihSCJwxNyyEn7wBSO9RbYMjVvkGbE5YOHDqgsnIL/nNwV59kvMSRU1i6pwqrbkltKYx5jkCJSzIaSgJv0lXuhbAzT/hLdDwIxjC1HF42/SeJRY3VPKvUvZceIJEs4vBljkujmHmjgSjAXRiMYbAT2AioRmCR5/ddUtb3BPQIDAQAB",auth-server-url=https://secure-sso-demo.cloudapps.example.com/auth,ssl-required=external,disable-trust-manager=true,allow-any-hostname=true)
+   /subsystem=elytron-oidc-client/secure-deployment="app-profile-jee.war"/:add(realm=demo,resource=app-profile-jee,auth-server-url=https://secure-sso-demo.cloudapps.example.com/auth,allow-any-hostname=true,enable-basic-auth=true,enable-cors=false)
+   /subsystem=elytron-oidc-client/secure-deployment="app-profile-jee.war":write-attribute(name=credential.secret,value=KICe8sS2)
+EOF
+)
+    cp $BATS_TEST_DIRNAME/secure-deployments.cli $JBOSS_HOME/standalone/configuration
+    run oidc_configure
+    echo "CONSOLE: ${output}"
+    output=$(<"${CLI_SCRIPT_FILE}")
+    normalize_spaces_new_lines
+    echo "FILE: ${output}"
+    [ "${output}" = "${expected}" ]
+}
+
+@test "sso provider, provider enabled, added non OIDC deployment to be secured with OIDC, generation expected" {
+    expected=$(cat << EOF
+    if (outcome != success) of /extension=org.wildfly.extension.elytron-oidc-client:read-resource
+   /extension=org.wildfly.extension.elytron-oidc-client:add()
+   end-if
+   if (outcome != success) of /subsystem=elytron-oidc-client:read-resource
+   /subsystem=elytron-oidc-client:add()
+   end-if
+   /subsystem=elytron-oidc-client/provider=rh-sso:add(provider-url=http://foo:9999/auth/realms/Wildfly,register-node-at-startup=true,register-node-period=600,ssl-required=external,allow-any-hostname=false)
+   /subsystem=elytron-oidc-client/provider=rh-sso:write-attribute(name=disable-trust-manager,value=true)
+   /subsystem=elytron-oidc-client/provider=rh-sso:write-attribute(name=enable-cors, value=false)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp2.war:add(enable-basic-auth=true, provider=rh-sso)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp2.war:write-attribute(name=client-id, value=simple-webapp2)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp2.war:write-attribute(name=bearer-only, value=false)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp4.war:add(enable-basic-auth=true, provider=rh-sso)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp4.war:write-attribute(name=client-id, value=simple-webapp4)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp4.war:write-attribute(name=bearer-only, value=false)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp5.war:add(enable-basic-auth=true, provider=rh-sso)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp5.war:write-attribute(name=client-id, value=simple-webapp5)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp5.war:write-attribute(name=bearer-only, value=false)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:add(enable-basic-auth=true, provider=rh-sso)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:write-attribute(name=client-id, value=simple-webapp)
+   /subsystem=elytron-oidc-client/secure-deployment=simple-webapp.war:write-attribute(name=bearer-only, value=false)
+   /subsystem=elytron-oidc-client/secure-deployment=foo-webapp.war:add(enable-basic-auth=true, provider=rh-sso)
+   /subsystem=elytron-oidc-client/secure-deployment=foo-webapp.war:write-attribute(name=client-id, value=foo-webapp)
+   /subsystem=elytron-oidc-client/secure-deployment=foo-webapp.war:write-attribute(name=bearer-only, value=false)
+
+EOF
+)
+    OIDC_PROVIDER_URL="http://foo:9999/auth/realms/Wildfly"
+    OIDC_PROVIDER_NAME="rh-sso"
+    SSO_OPENIDCONNECT_DEPLOYMENTS=simple-webapp4.war,simple-webapp5.war
     run oidc_configure
     echo "CONSOLE: ${output}"
     output=$(<"${CLI_SCRIPT_FILE}")

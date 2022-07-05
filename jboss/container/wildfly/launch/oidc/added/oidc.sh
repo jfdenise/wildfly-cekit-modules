@@ -6,6 +6,9 @@ source $JBOSS_HOME/bin/launch/oidc-keycloak-env.sh
 OIDC_EXTENSION="org.wildfly.extension.elytron-oidc-client"
 OIDC_SUBSYSTEM="elytron-oidc-client"
 
+SECURE_DEPLOYMENTS_CLI=$JBOSS_HOME/standalone/configuration/secure-deployments.cli
+OIDC_AUTH_METHOD="OIDC"
+
 function prepareEnv() {
   unset APPLICATION_NAME
   unset APPLICATION_ROUTES
@@ -38,6 +41,18 @@ function configure() {
 }
 
 function oidc_configure {
+  if [ -f "$SECURE_DEPLOYMENTS_CLI" ]; then
+    add_extension="$(oidc_add_extension)"
+    add_subsystem="$(oidc_add_subsystem)"
+    echo " 
+         $add_extension
+         $add_subsystem
+         " >> ${CLI_SCRIPT_FILE}
+    cat "$SECURE_DEPLOYMENTS_CLI" >> "$CLI_SCRIPT_FILE"
+    enable_oidc_deployments
+    return        
+  fi
+
   if  [ -n "${SSO_URL}" ] || [ "${OIDC_PROVIDER_NAME}" == "rh-sso" ] ||  [ "${OIDC_PROVIDER_NAME}" == "keycloak" ]; then
     source $JBOSS_HOME/bin/launch/oidc-keycloak-hooks.sh
     oidc_keycloak_mapEnvVariables
@@ -46,6 +61,7 @@ function oidc_configure {
     return
   fi
   log_info "Configuring OIDC subsystem for provider ${OIDC_PROVIDER_NAME}"
+  enable_oidc_deployments
   cli=
   # defined in the provider
   oidc_init_hook
@@ -63,6 +79,33 @@ function oidc_create_client_hook() {
 }
 
 # end implemented by providers
+
+function enable_oidc_deployments() {
+  if [ -n "$SSO_OPENIDCONNECT_DEPLOYMENTS" ]; then
+    explode_oidc_deployments $SSO_OPENIDCONNECT_DEPLOYMENTS
+  fi
+}
+
+function explode_oidc_deployments() {
+  local sso_deployments="${1}"
+
+  for sso_deployment in $(echo $sso_deployments | sed "s/,/ /g"); do
+    if [ ! -d "${JBOSS_HOME}/standalone/deployments/${sso_deployment}" ]; then
+      mkdir ${JBOSS_HOME}/standalone/deployments/tmp
+      unzip -o ${JBOSS_HOME}/standalone/deployments/${sso_deployment} -d ${JBOSS_HOME}/standalone/deployments/tmp
+      rm -f ${JBOSS_HOME}/standalone/deployments/${sso_deployment}
+      mv ${JBOSS_HOME}/standalone/deployments/tmp ${JBOSS_HOME}/standalone/deployments/${sso_deployment}
+      if [ ! -f ${JBOSS_HOME}/standalone/deployments/${sso_deployment}.dodeploy ]; then
+        touch ${JBOSS_HOME}/standalone/deployments/${sso_deployment}.dodeploy
+      fi
+    fi
+
+    if [ -f "${JBOSS_HOME}/standalone/deployments/${sso_deployment}/WEB-INF/web.xml" ]; then
+      requested_auth_method=$(cat ${JBOSS_HOME}/standalone/deployments/${sso_deployment}/WEB-INF/web.xml | xmllint --nowarning --xpath "string(//*[local-name()='auth-method'])" - | sed ':a;N;$!ba;s/\n//g' | tr -d '[:space:]')
+      sed -i "s|${requested_auth_method}|${OIDC_AUTH_METHOD}|" "${JBOSS_HOME}/standalone/deployments/${sso_deployment}/WEB-INF/web.xml"
+    fi
+  done
+}
 
 function oidc_add_extension() {
   cli="if (outcome != success) of /extension=${OIDC_EXTENSION}:read-resource
@@ -182,7 +225,7 @@ function oidc_configure_secure_deployment() {
   web_xml=$(read_file_in_war $f WEB-INF/web.xml)
   if [ -n "$web_xml" ]; then
     requested_auth_method=$(echo $web_xml | xmllint --nowarning --xpath "string(//*[local-name()='auth-method'])" - | sed ':a;N;$!ba;s/\n//g' | tr -d '[:space:]')
-    if [[ $requested_auth_method == "OIDC" ]]; then
+    if [[ $requested_auth_method == "${OIDC_AUTH_METHOD}" ]]; then
       cli="$cli
         /subsystem=${OIDC_SUBSYSTEM}/secure-deployment=${f}:add(enable-basic-auth=true, provider=${OIDC_PROVIDER_NAME})"
 
