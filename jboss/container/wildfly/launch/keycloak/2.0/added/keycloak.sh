@@ -46,11 +46,6 @@ EXTENSIONS_END_MARKER="</extensions>"
 
 function configure_cli_keycloak() {
 
-    # We cannot have nested if sentences in CLI, so we use Xpath here to see if the subsystem=keycloak-saml is in the file
-    xpath="\"//*[local-name()='subsystem' and starts-with(namespace-uri(), 'urn:jboss:domain:keycloak-saml:')]\""
-    local ret_saml
-    testXpathExpression "${xpath}" "ret_saml"
-
     app_sec_domain=${SSO_SECURITY_DOMAIN:-keycloak}
     id=$(date +%s)
 
@@ -71,20 +66,17 @@ function configure_cli_keycloak() {
     if [ -f "$SECURE_SAML_DEPLOYMENTS_CLI" ]; then
 
       elytron_assert="$(elytron_common_assert $app_sec_domain)"
-        if [ "${ret_saml}" -ne 0 ]; then
-          saml_extension="$(configure_SAML_extension)"
-          saml_elytron="$(configure_SAML_elytron $id)"
-          echo "
-            $elytron_assert
-            $saml_elytron"  >> ${CLI_SCRIPT_FILE}
-          echo " 
-            $saml_extension
-            /subsystem=keycloak-saml:add
-            " >> ${CLI_SCRIPT_FILE}
-          cat "$SECURE_SAML_DEPLOYMENTS_CLI" >> "$CLI_SCRIPT_FILE"
-        else
-          log_warning "keycloak saml subsystem already exists, no configuration applied"
-        fi
+      saml_extension="$(configure_SAML_extension)"
+      saml_subsystem="$(add_SAML_subsystem)"
+      saml_elytron="$(configure_SAML_elytron $id)"
+      echo "
+        $elytron_assert
+        $saml_elytron"  >> ${CLI_SCRIPT_FILE}
+      echo " 
+        $saml_extension
+        ${saml_subsystem}
+        " >> ${CLI_SCRIPT_FILE}
+      cat "$SECURE_SAML_DEPLOYMENTS_CLI" >> "$CLI_SCRIPT_FILE"
       if [ "$other_exists" == "true" ]; then
         other_config="$(configure_existing_other_cli $id)"
         echo "
@@ -97,19 +89,15 @@ function configure_cli_keycloak() {
     elif [ -f "$SECURE_SAML_DEPLOYMENTS" ]; then
 
       elytron_assert="$(elytron_common_assert $app_sec_domain)"
-        if [ "${ret_saml}" -ne 0 ]; then
-          keycloak_subsystem=$(cat "${SECURE_SAML_DEPLOYMENTS}" | sed ':a;N;$!ba;s/\n//g')
-          keycloak_subsystem="<subsystem xmlns=\"urn:jboss:domain:keycloak-saml:1.1\">${keycloak_subsystem}</subsystem>${SUBSYSTEM_END_MARKER}"
+      keycloak_subsystem=$(cat "${SECURE_SAML_DEPLOYMENTS}" | sed ':a;N;$!ba;s/\n//g')
+      keycloak_subsystem="<subsystem xmlns=\"urn:jboss:domain:keycloak-saml:1.1\">${keycloak_subsystem}</subsystem>${SUBSYSTEM_END_MARKER}"
 
-          sed -i "s|${SUBSYSTEM_END_MARKER}|${keycloak_subsystem}|" "${CONFIG_FILE}"
+      sed -i "s|${SUBSYSTEM_END_MARKER}|${keycloak_subsystem}|" "${CONFIG_FILE}"
 
-          saml_elytron="$(configure_SAML_elytron $id)"
-          echo "
-            $elytron_assert
-            $saml_elytron"  >> ${CLI_SCRIPT_FILE}
-        else
-          log_warning "keycloak saml subsystem already exists, no configuration applied"
-        fi
+      saml_elytron="$(configure_SAML_elytron $id)"
+      echo "
+        $elytron_assert
+        $saml_elytron"  >> ${CLI_SCRIPT_FILE}
       if [ "$other_exists" == "true" ]; then
         other_config="$(configure_existing_other_cli $id)"
         echo "
@@ -146,15 +134,11 @@ function configure_cli_keycloak() {
     saml="$cli"
     
     if [ ! -z "${saml}" ]; then
-      if [ "${ret_saml}" -ne 0 ]; then
         echo "
           $elytron_assert
           $saml_extension
           $saml_elytron
           $saml"  >> ${CLI_SCRIPT_FILE}
-      else
-        log_warning "keycloak saml subsystem already exists, no configuration applied"
-      fi
     fi
 
     if [ "$other_exists" == "true" ]; then
@@ -201,8 +185,14 @@ function configure_SAML_extension() {
   cli="
       if (outcome != success) of /extension=org.keycloak.keycloak-saml-adapter-subsystem:read-resource
         /extension=org.keycloak.keycloak-saml-adapter-subsystem:add()
-      else
-        echo org.keycloak.keycloak-saml-adapter-subsystem extension already added >> \${warning_file}
+      end-if"
+  echo "$cli"
+}
+
+function add_SAML_subsystem() {
+  cli="
+      if (outcome != success) of /subsystem=keycloak-saml:read-resource
+        /subsystem=keycloak-saml:add()
       end-if"
   echo "$cli"
 }
@@ -307,9 +297,10 @@ function configure_SAML_subsystem() {
   cli=
   do_configure_SAML_subsystem
   secure_deployments="$cli"
+  saml_subsystem="$(add_SAML_subsystem)"
   if [ ! -z "$secure_deployments" ]; then
     cli="
-       /subsystem=keycloak-saml:add
+       ${saml_subsystem}
        ${secure_deployments}
 "
   fi

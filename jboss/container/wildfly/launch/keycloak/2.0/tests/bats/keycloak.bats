@@ -51,7 +51,9 @@ teardown() {
 
 @test "SSO env variables, provider enabled, generation expected" {
     expected=$(cat << EOF
-    /subsystem=keycloak-saml:add
+    if (outcome != success) of /subsystem=keycloak-saml:read-resource
+      /subsystem=keycloak-saml:add()
+    end-if
    /subsystem=keycloak-saml/secure-deployment=simple-webapp-saml.war:add()
    /subsystem=keycloak-saml/secure-deployment=simple-webapp-saml.war/SP=simple-webapp-saml:add(sslPolicy=EXTERNAL)
    /subsystem=keycloak-saml/secure-deployment=simple-webapp-saml.war/SP=simple-webapp-saml/Key=Key:add(signing=true,encryption=true)
