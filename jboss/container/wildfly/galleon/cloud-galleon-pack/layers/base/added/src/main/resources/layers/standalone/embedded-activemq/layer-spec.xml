@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="embedded-activemq">
-    <exclude feature-id="subsystem.elytron.http-authentication-factory:http-authentication-factory=application-http-authentication"/>
+    <feature-group name="os-elytron"/>
     <feature spec="subsystem.messaging-activemq">
         <feature spec="subsystem.messaging-activemq.server">
             <param name="server" value="default"/>
