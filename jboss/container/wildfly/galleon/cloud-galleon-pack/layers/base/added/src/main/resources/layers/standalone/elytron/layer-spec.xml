@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="elytron">
+    <exclude feature-id="subsystem.elytron.http-authentication-factory:http-authentication-factory=application-http-authentication"/>
+    <feature-group name="os-elytron"/>
+</layer-spec>
+
