@@ -10,4 +10,8 @@
             </feature>
         </feature>
     </feature>
+    <feature spec="subsystem.messaging-activemq.server.address-setting">
+        <param name="address-setting" value="#"/>
+        <param name="redistribution-delay" value="1000"/>
+    </feature>
 </layer-spec>
