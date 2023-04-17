@@ -5,7 +5,7 @@
         <prop name="--server-config" value="standalone.xml"/>
     </props> 
     <packages>
-        <package name="wildfly.s2i.common"/>
+        <package name="wildfly.s2i.common" optional="true"/>
     </packages>
     <layers>
         <!-- required for termination and script execution -->
