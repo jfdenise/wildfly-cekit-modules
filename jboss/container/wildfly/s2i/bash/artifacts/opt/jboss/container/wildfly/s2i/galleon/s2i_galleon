@@ -1,6 +1,14 @@
 GALLEON_GENERIC_LAYERS_DEFINITION="$JBOSS_CONTAINER_WILDFLY_S2I_GALLEON_DIR"/provisioning/generic_layers
 GALLEON_EXTEND_CONFIG_DEFINITION="$JBOSS_CONTAINER_WILDFLY_S2I_GALLEON_DIR"/provisioning/extend_config
 
+function get_maven_project_for_layers() {
+ if [ -n "$GALLEON_EXTEND_DEFAULT_SERVER" ]; then
+   echo "$GALLEON_EXTEND_CONFIG_DEFINITION"
+ else
+   echo "$GALLEON_GENERIC_LAYERS_DEFINITION"
+ fi
+}
+
 function galleon_patch_generic_config() {
    if [ -n "$GALLEON_PROVISION_LAYERS" ]; then
      for layer in $(echo $GALLEON_PROVISION_LAYERS | sed "s/,/ /g"); do
@@ -12,7 +20,7 @@ function galleon_patch_generic_config() {
        fi
      done
      if [ -n "$layers" ]; then
-       sed -i "s|<!-- ##GALLEON_LAYERS## -->|${layers}|" $GALLEON_GENERIC_LAYERS_DEFINITION/config.xml
+       sed -i "s|<!-- ##GALLEON_LAYERS## -->|${layers}|" $(get_maven_project_for_layers)/config.xml
      fi
    fi
    if [ -n "$GALLEON_PROVISION_FEATURE_PACKS" ]; then
@@ -22,9 +30,10 @@ function galleon_patch_generic_config() {
        featurepacks="$featurepacks<location>$fp</location></feature-pack>"
      done
      if [ -n "$featurepacks" ]; then
-       sed -i "s|<!-- ##GALLEON_FEATURE_PACKS## -->|${featurepacks}|" $GALLEON_GENERIC_LAYERS_DEFINITION/pom.xml
+       sed -i "s|<!-- ##GALLEON_FEATURE_PACKS## -->|${featurepacks}|" $(get_maven_project_for_layers)/pom.xml
      fi
    fi
+   sed -i "s|##GALLEON_SERVER_CONFIG_NAME##|${DEFAULT_SERVER_CONFIG_NAME}|" $(get_maven_project_for_layers)/pom.xml
 }
 
 function galleon_dump_repo_file_list() {
@@ -247,7 +256,7 @@ function galleon_provision_server() {
 
     if [ -n "$GALLEON_PROVISION_LAYERS" ]; then
       galleon_patch_generic_config
-      GALLEON_DESCRIPTION_LOCATION="$GALLEON_GENERIC_LAYERS_DEFINITION"
+      GALLEON_DESCRIPTION_LOCATION="$(get_maven_project_for_layers)"
       if [ -f $GALLEON_LOCAL_PROVISIONING/provisioning.xml ]; then
         echo "Galleon provisioning of layers overrides Galleon provisioning.xml located in $GALLEON_LOCAL_PROVISIONING"
       fi
