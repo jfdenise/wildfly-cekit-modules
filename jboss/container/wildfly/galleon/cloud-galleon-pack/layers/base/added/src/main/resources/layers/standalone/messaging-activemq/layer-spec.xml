@@ -1,6 +1,8 @@
 <?xml version="1.0" ?>
 <layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="messaging-activemq">
     <props>
+        <prop name="add-on-depends-on" value="only:messaging-activemq"/>
+        <prop name="add-on" value="messaging,remote-cloud-messaging"/>
         <prop name="configuration" value="https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/messaging/2.0/module.yaml"/>
     </props>
 </layer-spec>
