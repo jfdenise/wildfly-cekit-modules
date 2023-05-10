@@ -1,7 +1,4 @@
 <?xml version="1.0" ?>
 <layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="jms-activemq">
-    <props>
-        <prop name="configuration" value="https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/messaging/2.0/module.yaml"/>
-    </props>
    <feature-group name="os-messaging"/>
 </layer-spec>
