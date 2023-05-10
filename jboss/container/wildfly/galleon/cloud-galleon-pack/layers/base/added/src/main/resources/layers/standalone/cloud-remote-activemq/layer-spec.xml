@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="cloud-remote-activemq">
     <props>
+        <prop name="kind" value="hidden"/>
         <prop name="add-on-depends-on" value="only:messaging-activemq"/>
         <prop name="add-on" value="messaging,cloud-remote-activemq"/>
         <prop name="add-on-description" value="Configure connection to a remote broker using MQ_SERVICE_PREFIX_MAPPING env variable."/>
