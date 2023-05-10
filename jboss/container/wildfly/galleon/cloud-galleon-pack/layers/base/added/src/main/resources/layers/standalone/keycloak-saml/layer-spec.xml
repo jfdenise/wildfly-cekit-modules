@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="keycloak-saml">
+    <props>
+        <prop name="configuration" value="https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/keycloak/2.0/module.yaml"/>
+        
+    </props>
+    <dependencies>
+        <layer name="ee"/>
+        <layer name="elytron"/>
+        <layer name="undertow"/>
+    </dependencies>
+    <feature spec="subsystem.keycloak-saml"/>
+</layer-spec>
