@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+# Setup JBOSS_HOME
+RESOLVED_JBOSS_HOME=`cd "$DIRNAME/.." >/dev/null; pwd`
+if [ "x$JBOSS_HOME" = "x" ]; then
+    # get the full path (without any relative bits)
+    JBOSS_HOME=$RESOLVED_JBOSS_HOME
+    echo "JBOSS_HOME has not been set, setting it to $JBOSS_HOME"
+fi
+
 echo "`date "+%Y-%m-%d %H:%M:%S"` Launching WildFly Server"
 
 # Always start sourcing the launch script supplied by wildfly-cekit-modules
