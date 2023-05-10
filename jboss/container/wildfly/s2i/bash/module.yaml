@@ -18,7 +18,7 @@ envs:
   value: "/opt/jboss/container/wildfly/s2i/galleon"
 - name: GALLEON_DIR
   description: "Used during s2i build to locate the directory relative to the application project directory that contains galleon custom content. By default the directory 'galleon' is used."
-- name: GALLEON_EXTEND_DEFAULT_SERVER
+- name: GALLEON_PROVISION_EXTEND_DEFAULT_SERVER
   description: "Set to true to extend the default server configuration with the layers defined in GALLEON_PROVISION_LAYERS env variable and feature-packs defined in GALLEON_PROVISION_FEATURE_PACKS env variable."
 - name: GALLEON_PROVISION_FEATURE_PACKS
   description: "A comma separated list of custom galleon feature-packs GAV.  Can be used when a set of Galleon layers has been set in GALLEON_PROVISION_LAYERS."
