@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # Setup JBOSS_HOME
+DIRNAME=`dirname "$0"`
 RESOLVED_JBOSS_HOME=`cd "$DIRNAME/.." >/dev/null; pwd`
 if [ "x$JBOSS_HOME" = "x" ]; then
     # get the full path (without any relative bits)
