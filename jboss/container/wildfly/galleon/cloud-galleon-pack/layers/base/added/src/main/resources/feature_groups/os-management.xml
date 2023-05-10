@@ -4,14 +4,4 @@
    <feature spec="core-service.management.management-interface.http-interface">
         <param name="console-enabled" value="false"/>
     </feature>
-    <!--<feature spec="socket-binding-group.socket-binding">
-        <param name="socket-binding-group" value="standard-sockets" />
-        <param name="socket-binding" value="management-http"/>
-        <param name="interface" value="bindall"/>
-    </feature>
-    <feature spec="socket-binding-group.socket-binding">
-        <param name="socket-binding-group" value="standard-sockets" />
-        <param name="socket-binding" value="management-https"/>
-        <param name="interface" value="bindall"/>
-    </feature>-->
 </feature-group-spec>
