@@ -10,3 +10,5 @@ chmod -R ug+rwX $SCRIPT_DIR
 pushd ${ARTIFACTS_DIR}
 cp -pr * /
 popd
+
+mkdir /bootable-jar
