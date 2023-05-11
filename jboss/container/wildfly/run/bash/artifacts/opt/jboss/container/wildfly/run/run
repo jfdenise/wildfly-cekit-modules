@@ -13,6 +13,7 @@ if [ ! -d "${JBOSS_HOME}" ]; then
       log_info "Bootable JAR $bootableJar detected"
       unzip $bootableJar -d /tmp/bootable-jar-unzipped 2>&1 > /dev/null
       unzip /tmp/bootable-jar-unzipped/wildfly.zip -d $JBOSS_HOME 2>&1 > /dev/null
+      find $JBOSS_HOME -name "*.sh" -exec chmod +x {} \;
       log_info "Bootable JAR installed in $JBOSS_HOME"
     fi
 fi
