@@ -4,8 +4,17 @@ source "${JBOSS_CONTAINER_UTIL_LOGGING_MODULE}/logging.sh"
 source "${JBOSS_CONTAINER_WILDFLY_RUN_MODULE}/run-utils.sh"
 
 if [ ! -d "${JBOSS_HOME}" ]; then
-    log_error "*** No installed Server, exiting ***"
-    exit 1
+    # Attempt bootable JAR
+    bootableJar=$(find /bootable-jar -type f -iname "*.jar")
+    if [ "x$bootableJar" == x ]; then
+      log_error "*** No installed Server, exiting ***"
+      exit 1
+    else
+      log_info "Bootable JAR $bootableJar detected"
+      unzip $bootableJar -d /tmp/bootable-jar-unzipped
+      unzip /tmp/bootable-jar-unzipped/wildfly.zip $JBOSS_HOME
+      log_info "Bootable JAR installed in $JBOSS_HOME"
+    fi
 fi
 
 # Un-used, this is a hook to add JPMS options to JVM at startup.
