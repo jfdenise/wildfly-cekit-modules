@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 <layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="keycloak-client-saml">
     <props>
-        <prop name="hidden-if" value="not-expected-file-keycloak"/>
-        <prop name="not-expected-file-keycloak" value="/WEB-INF/keycloak.json"/>
+        <prop name="hidden-if-not-expected-file-keycloak" value="/WEB-INF/keycloak.json"/>
     </props>
 </layer-spec>
