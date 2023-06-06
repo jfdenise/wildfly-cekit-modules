@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="keycloak-saml">
+<layer-spec xmlns="urn:jboss:galleon:layer-spec:2.0" name="keycloak-saml">
     <props>
         <prop name="configuration" value="https://raw.githubusercontent.com/jfdenise/wildfly-cekit-modules/optional_launch/jboss/container/wildfly/launch/keycloak/2.0/module.yaml"/>
         <prop name="no-configuration-if-expected-file-keycloak" value="/WEB-INF/keycloak.json"/>

@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<layer-spec xmlns="urn:jboss:galleon:layer-spec:1.0" name="microprofile-config">
+<layer-spec xmlns="urn:jboss:galleon:layer-spec:2.0" name="microprofile-config">
     <props>
         <prop name="configuration" value="https://raw.githubusercontent.com/wildfly/wildfly-cekit-modules/main/jboss/container/wildfly/launch/mp-config/module.yaml"/>
     </props>
