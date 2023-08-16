@@ -156,7 +156,7 @@ EOF
 # check that non-empty OPENSHIFT_DNS_PING_SERVICE_NAME is present when using dns.DNS_PING
 @test "Generate JGroups ping config - dns.DNS_PING requires service name" {
     expected=$(cat <<EOF
-/tmp/jboss_home/bin/launch/ha.sh: line 294: init_node_name: command not found
+/tmp/jboss_home/bin/launch/ha.sh: line 301: init_node_name: command not found
 ERROR Environment variable OPENSHIFT_DNS_PING_SERVICE_NAME is required when using dns.DNS_PING ping protocol. Please refer to the documentation for configuration.
 EOF
 )
@@ -205,6 +205,22 @@ EOF
   service_port="8888"
   ping_service_name="my-ping-service"
   socket_binding=""
+  run generate_dns_ping_config "${ping_protocol}" "${ping_service_name}" "${ping_namespace}" "${socket_binding}"
+  echo "Result: ${output}"
+  echo "Expected: ${expected}"
+  [ "${output}" = "${expected}" ]
+}
+
+@test "Generate JGroups ping config - dns.DNS_PING IPV6" {
+    expected=$(cat <<EOF
+<protocol type="dns.DNS_PING" ><property name="dns_query">my-ping-service</property><property name="async_discovery_use_separate_thread_per_request">true</property><property name="dns_record_type">AAAA</property></protocol>
+EOF
+)
+  ping_protocol="dns.DNS_PING"
+  service_port="8888"
+  ping_service_name="my-ping-service"
+  socket_binding=""
+  SERVER_USE_IPV6="true" 
   run generate_dns_ping_config "${ping_protocol}" "${ping_service_name}" "${ping_namespace}" "${socket_binding}"
   echo "Result: ${output}"
   echo "Expected: ${expected}"
@@ -380,6 +396,58 @@ EOF
       end-if
 EOF
 )
+  JGROUPS_PING_PROTOCOL="dns.DNS_PING"
+  OPENSHIFT_DNS_PING_SERVICE_PORT="service_port"
+  OPENSHIFT_DNS_PING_SERVICE_NAME="service_name"
+
+  CONF_AUTH_MODE="cli"
+  CONFIG_ADJUSTMENT_MODE="cli"
+
+  preConfigure
+  run configure_ha
+
+  echo "COSOLE:${output}"
+  output=$(<"${CLI_SCRIPT_FILE}")
+
+  normalize_spaces_new_lines
+  echo "${output}" > /tmp/output.txt
+  echo "${expected}" > /tmp/expected.txt
+
+  [ "${output}" = "${expected}" ]
+}
+
+@test "Test HA configuration file - CLI openshift.DNS_PING IPV6" {
+    expected=$(cat <<EOF
+      if (outcome == success) of /subsystem=jgroups/stack="udp"/protocol="dns.DNS_PING":read-resource
+          echo Cannot configure jgroups 'dns.DNS_PING' protocol under 'udp' stack. This protocol is already configured. >> \${error_file}
+          quit
+      end-if
+
+      if (outcome != success) of /subsystem=jgroups/stack="udp"/protocol="dns.DNS_PING":read-resource
+          batch
+              /subsystem=jgroups/stack=udp/protocol=dns.DNS_PING:add(add-index=0)
+              /subsystem=jgroups/stack=udp/protocol=dns.DNS_PING/property=dns_query:add(value="service_name")
+              /subsystem=jgroups/stack=udp/protocol=dns.DNS_PING/property=async_discovery_use_separate_thread_per_request:add(value=true)
+              /subsystem=jgroups/stack=udp/protocol=dns.DNS_PING/property=dns_record_type:add(value=AAAA)
+        run-batch
+      end-if
+
+      if (outcome == success) of /subsystem=jgroups/stack="tcp"/protocol="dns.DNS_PING":read-resource
+          echo Cannot configure jgroups 'dns.DNS_PING' protocol under 'tcp' stack. This protocol is already configured. >> \${error_file}
+          quit
+      end-if
+
+      if (outcome != success) of /subsystem=jgroups/stack="tcp"/protocol="dns.DNS_PING":read-resource
+          batch
+              /subsystem=jgroups/stack=tcp/protocol=dns.DNS_PING:add(add-index=0)
+              /subsystem=jgroups/stack=tcp/protocol=dns.DNS_PING/property=dns_query:add(value="service_name")
+              /subsystem=jgroups/stack=tcp/protocol=dns.DNS_PING/property=async_discovery_use_separate_thread_per_request:add(value=true)
+              /subsystem=jgroups/stack=tcp/protocol=dns.DNS_PING/property=dns_record_type:add(value=AAAA)
+        run-batch
+      end-if
+EOF
+)
+  SERVER_USE_IPV6="true" 
   JGROUPS_PING_PROTOCOL="dns.DNS_PING"
   OPENSHIFT_DNS_PING_SERVICE_PORT="service_port"
   OPENSHIFT_DNS_PING_SERVICE_NAME="service_name"

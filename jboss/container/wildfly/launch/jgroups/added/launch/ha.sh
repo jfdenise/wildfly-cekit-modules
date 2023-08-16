@@ -248,6 +248,9 @@ generate_dns_ping_config() {
       if [ "${ping_protocol}" = "dns.DNS_PING" ]; then
           config="${config}<property name=\"dns_query\">${ping_service_name}</property>"
           config="${config}<property name=\"async_discovery_use_separate_thread_per_request\">true</property>"
+          if [ "xxx$SERVER_USE_IPV6" == "xxxtrue" ]; then
+            config="${config}<property name=\"dns_record_type\">AAAA</property>"
+          fi
       fi
       config="${config}</protocol>"
     elif [ "${CONF_PING_MODE}" = "cli" ]; then
@@ -272,12 +275,16 @@ generate_dns_ping_config() {
 
             local op_prop1=""
             local op_prop2=""
+            local op_prop3=""
             if [ "${ping_protocol}" = "dns.DNS_PING" ]; then
               op_prop1="/subsystem=jgroups/stack=$stack/protocol=${ping_protocol}/property=dns_query:add(value=\"${ping_service_name}\")"
               op_prop2="/subsystem=jgroups/stack=$stack/protocol=${ping_protocol}/property=async_discovery_use_separate_thread_per_request:add(value=true)"
+              if [ "xxx$SERVER_USE_IPV6" == "xxxtrue" ]; then
+                op_prop3="/subsystem=jgroups/stack=$stack/protocol=${ping_protocol}/property=dns_record_type:add(value=AAAA)"
+              fi
             fi
 
-            config="${config} $(configure_protocol_cli_helper "$stack" "${ping_protocol}" "${op}" "${op_prop1}" "${op_prop2}")"
+            config="${config} $(configure_protocol_cli_helper "$stack" "${ping_protocol}" "${op}" "${op_prop1}" "${op_prop2}" "${op_prop3}")"
             add_protocol_at_prosition "${stack}" "${ping_protocol}" 0
           done <<< "${stackNames}"
         fi
