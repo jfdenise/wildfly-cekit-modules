@@ -145,9 +145,9 @@ function exec_cli_scripts() {
     cat ${script} >> ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
     echo "" >> ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
     if [ -n "${JBOSS_EAP_DOMAIN_DOMAIN_CONFIG}" ]; then
-      echo "stop-embedded-server" >> ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
-    else
       echo "stop-embedded-host-controller" >> ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
+    else
+      echo "stop-embedded-server" >> ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
     fi
     log_info "Configuring the server using embedded server"
     start=$(date +%s%3N)
