@@ -137,11 +137,18 @@ function exec_cli_scripts() {
 
     systime=$(date +%s)
     CLI_SCRIPT_FILE_FOR_EMBEDDED=/tmp/cli-configuration-script-${systime}.cli
-    echo "embed-server --timeout=30 --server-config=${SERVER_CONFIG} --std-out=${stdOut}" > ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
+    if [ -n "${JBOSS_EAP_DOMAIN_DOMAIN_CONFIG}" ]; then
+      echo "embed-host-controller --timeout=30 --std-out=echo --domain-config=${JBOSS_EAP_DOMAIN_DOMAIN_CONFIG} --host-config=${JBOSS_EAP_DOMAIN_HOST_CONFIG} --std-out=${stdOut}" > ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
+    else
+      echo "embed-server --timeout=30 --server-config=${SERVER_CONFIG} --std-out=${stdOut}" > ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
+    fi
     cat ${script} >> ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
     echo "" >> ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
-    echo "stop-embedded-server" >> ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
-
+    if [ -n "${JBOSS_EAP_DOMAIN_DOMAIN_CONFIG}" ]; then
+      echo "stop-embedded-server" >> ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
+    else
+      echo "stop-embedded-host-controller" >> ${CLI_SCRIPT_FILE_FOR_EMBEDDED}
+    fi
     log_info "Configuring the server using embedded server"
     start=$(date +%s%3N)
     eval ${JBOSS_HOME}/bin/jboss-cli.sh --echo-command "--file=${CLI_SCRIPT_FILE_FOR_EMBEDDED}" "--properties=${CLI_SCRIPT_PROPERTY_FILE}" "&>${CLI_SCRIPT_OUTPUT_FILE}"
