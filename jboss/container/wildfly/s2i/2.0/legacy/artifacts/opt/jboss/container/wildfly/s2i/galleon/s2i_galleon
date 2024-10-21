@@ -5,6 +5,12 @@ function galleon_patch_generic_config() {
    included_layers=
    excluded_layers=
    target_pom_file="${1}"
+
+   if [ -n "$PROVISIONING_MAVEN_PLUGIN_VERSION" ]; then
+     plugin_version="<version>${version.s2i.provisioning.maven.plugin}</version>"
+     sed -i "s|<!-- ##PROVISIONING_MAVEN_PLUGIN_VERSION## -->|${plugin_version}|" "${target_pom_file}"
+   fi
+
    if [ -n "$GALLEON_PROVISION_LAYERS" ]; then
      for layer in $(echo $GALLEON_PROVISION_LAYERS | sed "s/,/ /g"); do
        if [[ "$layer" =~ ^-.* ]]; then
