@@ -52,8 +52,8 @@ else
   if [ -n "${GALLEON_PROVISION_FEATURE_PACKS}" ] || [ -n "${GALLEON_USE_LOCAL_FILE}" ]; then
     log_info "You have activated legacy s2i workflow by setting GALLEON_PROVISION_FEATURE_PACKS or GALLEON_USE_LOCAL_FILE env variable."
     # images using this module must have set these env variables.
-    if [ -z "${PROVISIONING_MAVEN_PLUGIN_GROUP_ID}" ] || [ -z "${PROVISIONING_MAVEN_PLUGIN_ARTIFACT_ID}" ] || [ -z "${PROVISIONING_MAVEN_PLUGIN_VERSION}" ]; then
-      log_error "PROVISIONING_MAVEN_PLUGIN_GROUP_ID,  PROVISIONING_MAVEN_PLUGIN_ARTIFACT_ID and PROVISIONING_MAVEN_PLUGIN_VERSION env variable must be set to provision a server."
+    if [ -z "${PROVISIONING_MAVEN_PLUGIN_GROUP_ID}" ] || [ -z "${PROVISIONING_MAVEN_PLUGIN_ARTIFACT_ID}" ]; then
+      log_error "PROVISIONING_MAVEN_PLUGIN_GROUP_ID and PROVISIONING_MAVEN_PLUGIN_ARTIFACT_ID env variables must be set to provision a server."
       exit 1
     fi 
     # Legacy s2i workflow integration
