@@ -40,7 +40,7 @@ function galleon_patch_generic_config() {
      echo Updating Maven plugin to latest version
      export PROVISIONING_MAVEN_PLUGIN_VERSION=$DEFAULT_PROVISIONING_MAVEN_PLUGIN_VERSION
      parentPom="$GALLEON_PROVISIONING_PARENT/pom.xml"
-     mvn -f "$parentPom" versions:update-properties -Dmaven.version.ignore="$PROVISIONING_MAVEN_PLUGIN_VERSION_EXCLUDES" -Dincludes=$PROVISIONING_MAVEN_PLUGIN_GROUP_ID:$PROVISIONING_MAVEN_PLUGIN_ARTIFACT_ID -DallowMajorUpdates=false
+     mvn -f "$parentPom" versions:update-properties -Dmaven.version.ignore="$PROVISIONING_MAVEN_PLUGIN_VERSION_EXCLUDES" -Dincludes=$PROVISIONING_MAVEN_PLUGIN_GROUP_ID:$PROVISIONING_MAVEN_PLUGIN_ARTIFACT_ID -DallowMajorUpdates=false $PROVISIONING_MAVEN_PLUGIN_UPDATE_PROPERTIES_OPTIONS $GALLEON_MAVEN_ARGS
    fi
 }
 
