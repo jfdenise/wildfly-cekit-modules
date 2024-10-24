@@ -36,7 +36,7 @@ function galleon_patch_generic_config() {
    if [ -n "$channels" ]; then
      sed -i "s|<!-- ##GALLEON_WF_CHANNELS## -->|${channels}|" "${target_pom_file}"
    fi
-   if [ ! -n "$PROVISIONING_MAVEN_PLUGIN_VERSION" ]; then
+   if [ -z "$PROVISIONING_MAVEN_PLUGIN_VERSION" ]; then
      echo Updating Maven plugin to latest version
      export PROVISIONING_MAVEN_PLUGIN_VERSION=$DEFAULT_PROVISIONING_MAVEN_PLUGIN_VERSION
      parentPom="$GALLEON_PROVISIONING_PARENT/pom.xml"
