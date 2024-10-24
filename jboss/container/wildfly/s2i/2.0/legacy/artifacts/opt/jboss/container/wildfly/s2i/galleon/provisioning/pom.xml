@@ -48,7 +48,7 @@
                 <plugin>
                     <groupId>${s2i.provisioning.maven.plugin.groupId}</groupId>
                     <artifactId>${s2i.provisioning.maven.plugin.artifactId}</artifactId>
-                    <!-- ##PROVISIONING_MAVEN_PLUGIN_VERSION## -->
+                    <version>${version.s2i.provisioning.maven.plugin}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
