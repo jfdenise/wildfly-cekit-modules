@@ -1,15 +1,10 @@
 GALLEON_GENERIC_LAYERS_DEFINITION="$JBOSS_CONTAINER_WILDFLY_S2I_LEGACY_GALLEON_MODULE"/provisioning/generic_layers
 GALLEON_GENERIC_PROVISIONING_DEFINITION="$JBOSS_CONTAINER_WILDFLY_S2I_LEGACY_GALLEON_MODULE"/provisioning/generic_provisioning
-
+GALLEON_PROVISIONING_PARENT="$JBOSS_CONTAINER_WILDFLY_S2I_LEGACY_GALLEON_MODULE"/provisioning
 function galleon_patch_generic_config() {
    included_layers=
    excluded_layers=
    target_pom_file="${1}"
-
-   if [ -n "$PROVISIONING_MAVEN_PLUGIN_VERSION" ]; then
-     plugin_version="<version>${version.s2i.provisioning.maven.plugin}</version>"
-     sed -i "s|<!-- ##PROVISIONING_MAVEN_PLUGIN_VERSION## -->|${plugin_version}|" "${target_pom_file}"
-   fi
 
    if [ -n "$GALLEON_PROVISION_LAYERS" ]; then
      for layer in $(echo $GALLEON_PROVISION_LAYERS | sed "s/,/ /g"); do
@@ -40,6 +35,12 @@ function galleon_patch_generic_config() {
    channels=$(galleon_parse_channels)
    if [ -n "$channels" ]; then
      sed -i "s|<!-- ##GALLEON_WF_CHANNELS## -->|${channels}|" "${target_pom_file}"
+   fi
+   if [ ! -n "$PROVISIONING_MAVEN_PLUGIN_VERSION" ]; then
+     echo Updating Maven plugin to latest version
+     export PROVISIONING_MAVEN_PLUGIN_VERSION=$DEFAULT_PROVISIONING_MAVEN_PLUGIN_VERSION
+     parentPom="$GALLEON_PROVISIONING_PARENT/pom.xml"
+     mvn -f "$parentPom" versions:update-properties -Dmaven.version.ignore="$PROVISIONING_MAVEN_PLUGIN_VERSION_EXCLUDES" -Dincludes=$PROVISIONING_MAVEN_PLUGIN_GROUP_ID:$PROVISIONING_MAVEN_PLUGIN_ARTIFACT_ID -DallowMajorUpdates=false
    fi
 }
 
