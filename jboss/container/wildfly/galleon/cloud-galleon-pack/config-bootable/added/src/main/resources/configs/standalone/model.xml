@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+
+<config xmlns="urn:jboss:galleon:config:1.0" model="standalone">
+    <props>
+        <prop name="--server-config" value="standalone.xml"/>
+    </props> 
+    <packages>
+        <package name="wildfly.s2i.common"/>
+    </packages>
+    <layers>
+        <include name="health"/>
+    </layers>
+</config>
