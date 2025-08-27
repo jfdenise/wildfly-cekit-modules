@@ -331,6 +331,15 @@ configure_ha() {
   if [ "${CONF_PING_MODE}" = "xml" ]; then
     sed -i "s|<!-- ##JGROUPS_PING_PROTOCOL## -->|${ping_protocol_element}|g" $CONFIG_FILE
   elif [ "${CONF_PING_MODE}" = "cli" ]; then
+    # Remove possibly existing KUBE_PING
+    kubeping="if (outcome == success) of /subsystem=jgroups/stack=tcp/protocol=kubernetes.KUBE_PING:read-resource
+      /subsystem=jgroups/stack=tcp/protocol=kubernetes.KUBE_PING:remove
+    end-if
+
+    if (outcome == success) of /subsystem=jgroups/stack=udp/protocol=kubernetes.KUBE_PING:read-resource
+      /subsystem=jgroups/stack=udp/protocol=kubernetes.KUBE_PING:remove
+    end-if"
+    echo "${kubeping}" >> ${CLI_SCRIPT_FILE};
     echo "${ping_protocol_element}" >> ${CLI_SCRIPT_FILE};
   fi
 }
