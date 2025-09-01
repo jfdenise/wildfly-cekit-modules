@@ -4,7 +4,7 @@ SCRIPT_DIR=$(pwd -P)/$(dirname $0)
 # Install launch scripts.
 resources_dir="$1"
 packages_dir="$resources_dir/packages"
-common_package_dir="$packages_dir/wildfly.s2i.common/content"
+common_package_dir="$packages_dir/org.wildfly.cloud.launch.scripts/content"
 mkdir -p $common_package_dir
 export JBOSS_HOME="$common_package_dir"
 fp_content_list_file="$2"

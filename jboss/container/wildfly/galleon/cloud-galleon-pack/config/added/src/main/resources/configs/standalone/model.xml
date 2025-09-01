@@ -5,13 +5,13 @@
         <prop name="--server-config" value="standalone.xml"/>
     </props> 
     <packages>
-        <!-- We need to split this one to have the logging.properties be not excludable -->
-        <package name="wildfly.s2i.common" optional="true"/>
+        <package name="wildfly.s2i.common"/>
+        <package name="org.wildfly.cloud.launch.scripts" optional="true"/>
         <package name="org.wildfly.cloud.bootable.runtime" optional="true"/>
     </packages>
     <layers>
         <!-- required for termination and script execution -->
-        <include name="core-tools"/>
+        <include name="core-tools" optional="true"/>
         <include name="health"/>
     </layers>
 </config>
