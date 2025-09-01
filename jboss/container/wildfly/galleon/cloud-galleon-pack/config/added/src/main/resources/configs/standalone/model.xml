@@ -10,8 +10,6 @@
         <package name="org.wildfly.cloud.bootable.runtime" optional="true"/>
     </packages>
     <layers>
-        <!-- required for termination and script execution -->
-        <include name="core-tools" optional="true"/>
         <include name="health"/>
     </layers>
 </config>
