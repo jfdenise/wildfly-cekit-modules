@@ -19,6 +19,10 @@ if (outcome == success) of /subsystem=logging/pattern-formatter=PATTERN:read-res
   /subsystem=logging/pattern-formatter=PATTERN:remove
 end-if
 
+if(outcome == success) of /subsystem=undertow/server=default-server/ajp-listener=ajp:read-resource
+ exit 
+end-if
+
 #remove ajp
 if (outcome == success) of /socket-binding-group=standard-sockets/socket-binding=ajp:read-resource
   /socket-binding-group=standard-sockets/socket-binding=ajp:remove
