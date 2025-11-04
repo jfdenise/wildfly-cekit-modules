@@ -20,7 +20,8 @@ if (outcome == success) of /subsystem=logging/pattern-formatter=PATTERN:read-res
 end-if
 
 if (outcome == success) of /subsystem=undertow/server=default-server/ajp-listener=ajp:read-resource
- exit 
+  stop-embedded-server
+  exit
 end-if
 
 #remove ajp
