@@ -1,4 +1,4 @@
-name: WildFly CEKit OpenShift Modules - Build/Run WildFly s2i image if the changes introduced in the PR impact it.
+name: TO REMOVE JUST FOR TEST WildFly CEKit OpenShift Modules - Build/Run WildFly s2i image if the changes introduced in the PR impact it.
 on:
   pull_request:
      branches: [ main ]
