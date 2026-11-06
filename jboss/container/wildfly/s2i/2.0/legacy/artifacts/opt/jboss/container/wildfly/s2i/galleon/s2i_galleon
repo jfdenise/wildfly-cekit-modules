@@ -37,6 +37,7 @@ function galleon_patch_generic_config() {
    fi
    options=$(galleon_parse_options)
    if [ -n "$options" ]; then
+     echo "OPTIONS FOUND IN ENV $options"
      sed -i "s|<!-- ##GALLEON_OPTIONS## -->|${options}|" "${target_pom_file}"
    fi
 }
@@ -268,4 +269,6 @@ function galleon_install_server() {
   # to chown from our running, random UID to the jboss user. So just chown to the current user (which will be root in a docker build
   # and a random uid elsewhere)
   chown -R ${USER}:root $JBOSS_HOME && chmod -R ug+rwX $JBOSS_HOME
+  echo "CONTENT OF THE SERVER"
+  ls -l $JBOSS_HOME
 }
